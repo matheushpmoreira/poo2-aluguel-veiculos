@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vehicle-rental-system"
+version = "0.1.0"
+description = "Sistema de aluguel de veículos com interface gráfica em tkinter."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Matheus Henrique", email = "matheus.hpm@grad.ufsc.br" }
+]
+dependencies = []
+
+[project.scripts]
+vehicle-rental = "system.main:main"
+seed-vehicle-rental = "scripts.seed_database:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["scripts*"]
+
+[tool.unittest]
+start-directory = "tests"
+pattern = "test_*.py"
+
+[tool.ruff]
+line-length = 120

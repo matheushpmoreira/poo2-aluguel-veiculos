@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+from datetime import date
+
+from system.backend.models.rental import ACTIVE, Rental
+from system.backend.repositories import CustomerRepository, RentalRepository, VehicleRepository
+
+
+class RentalService:
+    def __init__(
+        self,
+        rental_repository: RentalRepository,
+        customer_repository: CustomerRepository,
+        vehicle_repository: VehicleRepository,
+    ) -> None:
+        self.rental_repository = rental_repository
+        self.customer_repository = customer_repository
+        self.vehicle_repository = vehicle_repository
+
+    def create_rental(self, customer_code: str, vehicle_plate: str, pickup_date: date | str, days: int | str) -> Rental:
+        customer = self.customer_repository.get_by_code(customer_code)
+        if customer is None:
+            raise ValueError("Rental requires a registered customer.")
+
+        vehicle = self.vehicle_repository.get_by_plate(vehicle_plate)
+        if vehicle is None:
+            raise ValueError("Rental requires a registered vehicle.")
+        if not vehicle.is_available or self.rental_repository.has_active_rental_for_vehicle(vehicle.plate):
+            raise ValueError("Vehicle is not available for rental.")
+
+        parsed_date = date.fromisoformat(pickup_date) if isinstance(pickup_date, str) else pickup_date
+        rental = Rental.create(customer, vehicle, parsed_date, int(days))
+        vehicle.mark_as_rented()
+        self.vehicle_repository.update(vehicle)
+        return self.rental_repository.save(rental)
+
+    def finish_rental(self, rental_id: int | str) -> Rental:
+        rental = self.get_rental(int(rental_id))
+        if rental.status != ACTIVE:
+            raise ValueError("Rental is already finished.")
+
+        vehicle = self.vehicle_repository.get_by_plate(rental.vehicle_plate)
+        if vehicle is None:
+            raise ValueError("Rental vehicle was not found.")
+        rental.finish()
+        vehicle.mark_as_available()
+        self.rental_repository.update(rental)
+        self.vehicle_repository.update(vehicle)
+        return rental
+
+    def get_rental(self, rental_id: int) -> Rental:
+        rental = self.rental_repository.get_by_id(rental_id)
+        if rental is None:
+            raise ValueError("Rental was not found.")
+        return rental
+
+    def list_rentals(self) -> list[Rental]:
+        return self.rental_repository.list_all()
+
+    def list_customer_rentals(self, customer_code: str) -> list[Rental]:
+        return self.rental_repository.list_by_customer(customer_code)
+
+    def list_active_rentals(self) -> list[Rental]:
+        return [rental for rental in self.list_rentals() if rental.status == ACTIVE]
+
+    def calculate_late_fee(self, rental_id: int | str, reference_date: date | None = None) -> float:
+        rental = self.get_rental(int(rental_id))
+        if rental.status != ACTIVE:
+            return 0.0
+        today = reference_date or date.today()
+        if today <= rental.expected_return_date:
+            return 0.0
+        vehicle = self.vehicle_repository.get_by_plate(rental.vehicle_plate)
+        if vehicle is None:
+            raise ValueError("Rental vehicle was not found.")
+        overdue_days = (today - rental.expected_return_date).days
+        return round(vehicle.daily_rate * 0.2 * overdue_days, 2)
