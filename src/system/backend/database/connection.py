@@ -4,13 +4,9 @@ import sqlite3
 from pathlib import Path
 
 
-DEFAULT_DATABASE_PATH = Path(".data") / "vehicle_rental.sqlite3"
-
-
 class Database:
-    def __init__(self, database_path: str | Path = DEFAULT_DATABASE_PATH) -> None:
+    def __init__(self, database_path: str | Path = ".vehicle_rental.sqlite3") -> None:
         self.database_path = Path(database_path)
-        self.database_path.parent.mkdir(parents=True, exist_ok=True)
         self.initialize()
 
     def connect(self) -> sqlite3.Connection:
