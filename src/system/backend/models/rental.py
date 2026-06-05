@@ -28,6 +28,7 @@ class Rental:
         self.customer_code = self.customer_code.strip()
         self.vehicle_plate = self.vehicle_plate.strip().upper()
         self.status = self.status.strip().lower()
+
         if not self.customer_code or not self.vehicle_plate:
             raise ValueError("Rental customer and vehicle are required.")
         if self.days <= 0:
@@ -41,17 +42,16 @@ class Rental:
 
     @classmethod
     def create(cls, customer: Customer, vehicle: Vehicle, pickup_date: date, days: int) -> "Rental":
-        total_amount = vehicle.rental_cost(days)
         return cls(
             customer_code=customer.code,
             vehicle_plate=vehicle.plate,
             pickup_date=pickup_date,
             expected_return_date=date.fromordinal(pickup_date.toordinal() + days),
             days=days,
-            total_amount=total_amount,
+            total_amount=vehicle.calc_rental_cost(days),
             customer=customer,
             vehicle=vehicle,
         )
 
-    def finish(self) -> None:
+    def set_finished(self) -> None:
         self.status = FINISHED

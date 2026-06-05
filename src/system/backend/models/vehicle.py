@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-
+from datetime import date
 
 AVAILABLE = "available"
 RENTED = "rented"
@@ -23,9 +23,10 @@ class Vehicle:
         self.model = self.model.strip()
         self.status = self.status.strip().lower()
         self.vehicle_type = self.vehicle_type.strip().lower()
+
         if not self.plate or not self.brand or not self.model:
             raise ValueError("Vehicle plate, brand and model are required.")
-        if self.year < 1886:
+        if not (0 < self.year < date.today().year):
             raise ValueError("Vehicle year is invalid.")
         if self.daily_rate <= 0:
             raise ValueError("Vehicle daily rate must be greater than zero.")
@@ -36,15 +37,15 @@ class Vehicle:
     def is_available(self) -> bool:
         return self.status == AVAILABLE
 
-    def mark_as_rented(self) -> None:
+    def set_rented(self) -> None:
         if not self.is_available:
             raise ValueError("Vehicle is already rented.")
         self.status = RENTED
 
-    def mark_as_available(self) -> None:
+    def set_available(self) -> None:
         self.status = AVAILABLE
 
-    def rental_cost(self, days: int) -> float:
+    def calc_rental_cost(self, days: int) -> float:
         if days <= 0:
             raise ValueError("Rental days must be greater than zero.")
         return round(self.daily_rate * days, 2)
