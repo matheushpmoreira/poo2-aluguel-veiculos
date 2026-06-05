@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from system.backend.models.vehicle import AVAILABLE, RENTED, Vehicle, create_vehicle
+from system.backend.models.vehicle import Vehicle, VehicleStatus, VehicleType
 from system.backend.repositories.vehicle_repository import VehicleRepository
 
 
@@ -16,11 +16,11 @@ class VehicleService:
         brand: str,
         model: str,
         year: int,
-        vehicle_type: str,
+        vehicle_type: VehicleType,
         daily_rate: float,
-        status: str = AVAILABLE,
+        status: VehicleStatus = VehicleStatus.AVAILABLE,
     ) -> Vehicle:
-        vehicle = create_vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
+        vehicle = Vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
 
         try:
             self.vehicle_repository.insert(vehicle)
@@ -34,21 +34,21 @@ class VehicleService:
         brand: str,
         model: str,
         year: int,
-        vehicle_type: str,
+        vehicle_type: VehicleType,
         daily_rate: float,
-        status: str,
+        status: VehicleStatus,
     ) -> Vehicle:
-        if status not in {AVAILABLE, RENTED}:
+        if status not in VehicleStatus:
             raise ValueError("Vehicle status must be available or rented.")
 
-        vehicle = create_vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
+        vehicle = Vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
         self.vehicle_repository.update(vehicle)
         return vehicle
 
     def delete_vehicle(self, plate: str) -> None:
         vehicle = self.get_vehicle(plate)
 
-        if vehicle.status == RENTED:
+        if vehicle.status == VehicleStatus.RENTED:
             raise ValueError("A rented vehicle cannot be deleted.")
         try:
             self.vehicle_repository.delete(plate)

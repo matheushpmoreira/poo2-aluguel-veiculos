@@ -7,10 +7,11 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from system.backend.controllers import AppController
+from system.backend.models import RentalStatus, VehicleStatus, VehicleType
 
 
-VEHICLE_TYPES = ("car", "motorcycle", "pickup truck", "van")
-VEHICLE_STATUSES = ("available", "rented")
+VEHICLE_TYPES = tuple(vehicle_type.value for vehicle_type in VehicleType)
+VEHICLE_STATUSES = tuple(status.value for status in VehicleStatus)
 
 
 class RentalSystemApp(tk.Tk):
@@ -190,9 +191,9 @@ class VehicleAdminFrame(BaseFrame):
                     vehicle.brand,
                     vehicle.model,
                     vehicle.year,
-                    vehicle.vehicle_type,
+                    vehicle.vehicle_type.value,
                     f"{vehicle.daily_rate:.2f}",
-                    vehicle.status,
+                    vehicle.status.value,
                 ),
             )
 
@@ -418,7 +419,7 @@ class RentalAdminFrame(BaseFrame):
 
     def refresh(self) -> None:
         customers = self.controller.get_customers()
-        vehicles = self.controller.get_vehicles({"status": "available"})
+        vehicles = self.controller.get_vehicles({"status": VehicleStatus.AVAILABLE.value})
         self.customer_options = {f"{customer.code} - {customer.name}": customer.code for customer in customers}
         self.vehicle_options = {
             f"{vehicle.plate} - {vehicle.brand} {vehicle.model} ({vehicle.daily_rate:.2f})": vehicle.plate
@@ -444,7 +445,7 @@ class RentalAdminFrame(BaseFrame):
                     rental.expected_return_date.isoformat(),
                     rental.days,
                     f"{rental.total_amount:.2f}",
-                    rental.status,
+                    rental.status.value,
                 ),
             )
 
@@ -505,13 +506,19 @@ class ReportFrame(BaseFrame):
     def refresh(self) -> None:
         self.available_tree.delete(*self.available_tree.get_children())
         self.active_tree.delete(*self.active_tree.get_children())
-        for vehicle in self.controller.get_vehicles({"status": "available"}):
+        for vehicle in self.controller.get_vehicles({"status": VehicleStatus.AVAILABLE.value}):
             self.available_tree.insert(
                 "",
                 "end",
-                values=(vehicle.plate, vehicle.brand, vehicle.model, vehicle.vehicle_type, f"{vehicle.daily_rate:.2f}"),
+                values=(
+                    vehicle.plate,
+                    vehicle.brand,
+                    vehicle.model,
+                    vehicle.vehicle_type.value,
+                    f"{vehicle.daily_rate:.2f}",
+                ),
             )
-        for rental in self.controller.get_rentals({"status": "active"}):
+        for rental in self.controller.get_rentals({"status": RentalStatus.ACTIVE.value}):
             late_fee = self.controller.get_rental_late_fee(rental.rental_id or 0)
             self.active_tree.insert(
                 "",
@@ -541,14 +548,20 @@ class ReportFrame(BaseFrame):
                 writer = csv.writer(file)
                 writer.writerow(["Available vehicles"])
                 writer.writerow(["plate", "brand", "model", "type", "daily_rate"])
-                for vehicle in self.controller.get_vehicles({"status": "available"}):
+                for vehicle in self.controller.get_vehicles({"status": VehicleStatus.AVAILABLE.value}):
                     writer.writerow(
-                        [vehicle.plate, vehicle.brand, vehicle.model, vehicle.vehicle_type, f"{vehicle.daily_rate:.2f}"]
+                        [
+                            vehicle.plate,
+                            vehicle.brand,
+                            vehicle.model,
+                            vehicle.vehicle_type.value,
+                            f"{vehicle.daily_rate:.2f}",
+                        ]
                     )
                 writer.writerow([])
                 writer.writerow(["Active rentals"])
                 writer.writerow(["id", "customer", "vehicle", "expected_return", "total", "late_fee"])
-                for rental in self.controller.get_rentals({"status": "active"}):
+                for rental in self.controller.get_rentals({"status": RentalStatus.ACTIVE.value}):
                     writer.writerow(
                         [
                             rental.rental_id,
@@ -684,7 +697,7 @@ class PublicArea(BaseFrame):
     def refresh_public_lists(self) -> None:
         self.available_tree.delete(*self.available_tree.get_children())
         self.rental_tree.delete(*self.rental_tree.get_children())
-        for vehicle in self.controller.get_vehicles({"status": "available"}):
+        for vehicle in self.controller.get_vehicles({"status": VehicleStatus.AVAILABLE.value}):
             self.available_tree.insert(
                 "",
                 "end",
@@ -693,7 +706,7 @@ class PublicArea(BaseFrame):
                     vehicle.brand,
                     vehicle.model,
                     vehicle.year,
-                    vehicle.vehicle_type,
+                    vehicle.vehicle_type.value,
                     f"{vehicle.daily_rate:.2f}",
                 ),
             )
@@ -710,6 +723,6 @@ class PublicArea(BaseFrame):
                     rental.expected_return_date.isoformat(),
                     rental.days,
                     f"{rental.total_amount:.2f}",
-                    rental.status,
+                    rental.status.value,
                 ),
             )

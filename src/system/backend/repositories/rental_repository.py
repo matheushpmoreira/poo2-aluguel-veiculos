@@ -25,7 +25,7 @@ class RentalRepository:
                     rental.expected_return_date.isoformat(),
                     rental.days,
                     rental.total_amount,
-                    rental.status,
+                    rental.status.value,
                 ),
             )
 
@@ -51,7 +51,7 @@ class RentalRepository:
                     rental.expected_return_date.isoformat(),
                     rental.days,
                     rental.total_amount,
-                    rental.status,
+                    rental.status.value,
                     rental.rental_id,
                 ),
             )

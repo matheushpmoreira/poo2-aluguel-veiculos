@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from system.backend.database import Database
-from system.backend.models.vehicle import Vehicle, create_vehicle
+from system.backend.models.vehicle import Vehicle
 
 
 class VehicleRepository:
@@ -20,9 +20,9 @@ class VehicleRepository:
                     vehicle.brand,
                     vehicle.model,
                     vehicle.year,
-                    vehicle.vehicle_type,
+                    vehicle.vehicle_type.value,
                     vehicle.daily_rate,
-                    vehicle.status,
+                    vehicle.status.value,
                 ),
             )
 
@@ -38,9 +38,9 @@ class VehicleRepository:
                     vehicle.brand,
                     vehicle.model,
                     vehicle.year,
-                    vehicle.vehicle_type,
+                    vehicle.vehicle_type.value,
                     vehicle.daily_rate,
-                    vehicle.status,
+                    vehicle.status.value,
                     vehicle.plate,
                 ),
             )
@@ -95,7 +95,7 @@ class VehicleRepository:
 
     @staticmethod
     def _parse_row(row) -> Vehicle:
-        return create_vehicle(
+        return Vehicle(
             plate=row["plate"],
             brand=row["brand"],
             model=row["model"],

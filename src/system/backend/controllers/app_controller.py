@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from system.backend.database import Database
-from system.backend.models import Customer, Rental, Vehicle
+from system.backend.models import Customer, Rental, RentalStatus, Vehicle, VehicleStatus, VehicleType
 from system.backend.repositories import CustomerRepository, RentalRepository, VehicleRepository
 from system.backend.services import CustomerService, RentalService, VehicleService
 
@@ -26,32 +26,25 @@ class AppController:
 
     def get_vehicles(self, query: dict[str, str] | None = None) -> list[Vehicle]:
         query = query or {}
-        # text = str(query.get("q", "")).strip()
-        # status = str(query.get("status", "")).strip()
+        text = str(query.get("q", "")).strip()
+        status = self._parse_vehicle_status(query.get("status", "")) if query.get("status") else None
         valid_keys = {"brand", "model", "plate", "status"}
-        
-        for key in query:
-            if key not in valid_keys:
-                del query[key]
 
-        return self._vehicle_service.search_vehicles(**query)
+        if text:
+            status_value = status.value if status else ""
+            vehicles_by_plate = self._vehicle_service.search_vehicles(plate=text, status=status_value)
+            vehicles_by_brand = self._vehicle_service.search_vehicles(brand=text, status=status_value)
+            vehicles_by_model = self._vehicle_service.search_vehicles(model=text, status=status_value)
+            vehicles = {}
+            for vehicle in vehicles_by_plate + vehicles_by_brand + vehicles_by_model:
+                vehicles[vehicle.plate] = vehicle
+            return sorted(vehicles.values(), key=lambda vehicle: vehicle.plate)
 
-        # if text:
-        #     vehicles_by_plate = self._vehicle_service.search_vehicles(plate=text, status=status)
-        #     vehicles_by_brand = self._vehicle_service.search_vehicles(brand=text, status=status)
-        #     vehicles_by_model = self._vehicle_service.search_vehicles(model=text, status=status)
-        #     vehicles = {}
-        #     for vehicle in vehicles_by_plate + vehicles_by_brand + vehicles_by_model:
-        #         vehicles[vehicle.plate] = vehicle
-        #     return sorted(vehicles.values(), key=lambda vehicle: vehicle.plate)
-        # if query:
-        #     return self._vehicle_service.search_vehicles(
-        #         brand=str(query.get("brand", "")),
-        #         model=str(query.get("model", "")),
-        #         plate=str(query.get("plate", "")),
-        #         status=status,
-        #     )
-        # return self._vehicle_service.list_vehicles()
+        search_query = {key: str(value) for key, value in query.items() if key in valid_keys}
+        if status:
+            search_query["status"] = status.value
+
+        return self._vehicle_service.search_vehicles(**search_query)
 
     def get_vehicle(self, plate: str) -> Vehicle:
         return self._vehicle_service.get_vehicle(plate)
@@ -62,9 +55,9 @@ class AppController:
             brand=str(data.get("brand", "")),
             model=str(data.get("model", "")),
             year=self._parse_int(data.get("year"), "year"),
-            vehicle_type=str(data.get("vehicle_type", "")),
+            vehicle_type=self._parse_vehicle_type(data.get("vehicle_type")),
             daily_rate=self._parse_float(data.get("daily_rate"), "daily rate"),
-            status=str(data.get("status", "available")),
+            status=self._parse_vehicle_status(data.get("status", VehicleStatus.AVAILABLE)),
         )
 
     def put_vehicle(self, plate: str, data: dict[str, Any]) -> Vehicle:
@@ -73,9 +66,9 @@ class AppController:
             brand=str(data.get("brand", "")),
             model=str(data.get("model", "")),
             year=self._parse_int(data.get("year"), "year"),
-            vehicle_type=str(data.get("vehicle_type", "")),
+            vehicle_type=self._parse_vehicle_type(data.get("vehicle_type")),
             daily_rate=self._parse_float(data.get("daily_rate"), "daily rate"),
-            status=str(data.get("status", "")),
+            status=self._parse_vehicle_status(data.get("status")),
         )
 
     def delete_vehicle(self, plate: str) -> None:
@@ -119,7 +112,7 @@ class AppController:
     def get_rentals(self, query: dict[str, Any] | None = None) -> list[Rental]:
         query = query or {}
         customer_code = str(query.get("customer_code", "")).strip()
-        status = str(query.get("status", "")).strip().lower()
+        status = self._parse_rental_status(query.get("status")) if query.get("status") else None
         if customer_code:
             rentals = self._rental_service.list_customer_rentals(customer_code)
         else:
@@ -173,3 +166,24 @@ class AppController:
             return date.fromisoformat(str(value))
         except (TypeError, ValueError) as exc:
             raise ValueError(f"Invalid {field_name}. Use YYYY-MM-DD.") from exc
+
+    @staticmethod
+    def _parse_vehicle_status(value: Any) -> VehicleStatus:
+        try:
+            return VehicleStatus(str(value).strip().lower())
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Vehicle status must be available or rented.") from exc
+
+    @staticmethod
+    def _parse_vehicle_type(value: Any) -> VehicleType:
+        try:
+            return VehicleType(str(value).strip().lower())
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Vehicle type must be car, motorcycle, pickup truck or van.") from exc
+
+    @staticmethod
+    def _parse_rental_status(value: Any) -> RentalStatus:
+        try:
+            return RentalStatus(str(value).strip().lower())
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Rental status must be active or finished.") from exc
