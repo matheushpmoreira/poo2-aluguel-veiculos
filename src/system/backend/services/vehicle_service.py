@@ -21,8 +21,9 @@ class VehicleService:
         status: str = AVAILABLE,
     ) -> Vehicle:
         vehicle = create_vehicle(plate, brand, model, int(year), vehicle_type, float(daily_rate), status)
+
         try:
-            self.vehicle_repository.save(vehicle)
+            self.vehicle_repository.insert(vehicle)
         except sqlite3.IntegrityError as exc:
             raise ValueError("A vehicle with this plate already exists.") from exc
         return vehicle
@@ -39,12 +40,14 @@ class VehicleService:
     ) -> Vehicle:
         if status not in {AVAILABLE, RENTED}:
             raise ValueError("Vehicle status must be available or rented.")
+
         vehicle = create_vehicle(plate, brand, model, int(year), vehicle_type, float(daily_rate), status)
         self.vehicle_repository.update(vehicle)
         return vehicle
 
     def delete_vehicle(self, plate: str) -> None:
         vehicle = self.get_vehicle(plate)
+
         if vehicle.status == RENTED:
             raise ValueError("A rented vehicle cannot be deleted.")
         try:
@@ -54,12 +57,17 @@ class VehicleService:
 
     def get_vehicle(self, plate: str) -> Vehicle:
         vehicle = self.vehicle_repository.get_by_plate(plate)
+
         if vehicle is None:
             raise ValueError("Vehicle was not found.")
+
         return vehicle
 
     def list_vehicles(self) -> list[Vehicle]:
-        return self.vehicle_repository.list_all()
+        return self.vehicle_repository.get_all()
 
-    def search_vehicles(self, text: str = "", status: str = "") -> list[Vehicle]:
-        return self.vehicle_repository.search(text, status)
+    def search_vehicles(self, **kwargs: dict[str, str]) -> list[Vehicle]:
+        # return self.vehicle_repository.search(text, status)
+        return self.vehicle_repository.search(
+            **{k: v for k, v in kwargs.items() if k in ("brand", "model", "plate", "status")}
+        )

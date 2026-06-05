@@ -12,10 +12,12 @@ class CustomerService:
 
     def create_customer(self, code: str, name: str, phone: str, email: str, address: str, password: str) -> Customer:
         customer = Customer(code, name, phone, email, address, password)
+
         try:
-            self.customer_repository.save(customer)
+            self.customer_repository.insert(customer)
         except sqlite3.IntegrityError as exc:
             raise ValueError("A customer with this code already exists.") from exc
+
         return customer
 
     def update_customer(self, code: str, name: str, phone: str, email: str, address: str, password: str) -> Customer:
@@ -31,15 +33,19 @@ class CustomerService:
 
     def get_customer(self, code: str) -> Customer:
         customer = self.customer_repository.get_by_code(code)
+
         if customer is None:
             raise ValueError("Customer was not found.")
+
         return customer
 
     def list_customers(self) -> list[Customer]:
-        return self.customer_repository.list_all()
+        return self.customer_repository.get_all()
 
     def login(self, code: str, password: str) -> Customer:
         customer = self.get_customer(code)
+
         if not customer.check_password(password):
             raise ValueError("Invalid customer code or password.")
+
         return customer
