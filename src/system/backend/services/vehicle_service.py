@@ -15,12 +15,12 @@ class VehicleService:
         plate: str,
         brand: str,
         model: str,
-        year: int | str,
+        year: int,
         vehicle_type: str,
-        daily_rate: float | str,
+        daily_rate: float,
         status: str = AVAILABLE,
     ) -> Vehicle:
-        vehicle = create_vehicle(plate, brand, model, int(year), vehicle_type, float(daily_rate), status)
+        vehicle = create_vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
 
         try:
             self.vehicle_repository.insert(vehicle)
@@ -33,15 +33,15 @@ class VehicleService:
         plate: str,
         brand: str,
         model: str,
-        year: int | str,
+        year: int,
         vehicle_type: str,
-        daily_rate: float | str,
+        daily_rate: float,
         status: str,
     ) -> Vehicle:
         if status not in {AVAILABLE, RENTED}:
             raise ValueError("Vehicle status must be available or rented.")
 
-        vehicle = create_vehicle(plate, brand, model, int(year), vehicle_type, float(daily_rate), status)
+        vehicle = create_vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
         self.vehicle_repository.update(vehicle)
         return vehicle
 
@@ -66,7 +66,7 @@ class VehicleService:
     def list_vehicles(self) -> list[Vehicle]:
         return self.vehicle_repository.get_all()
 
-    def search_vehicles(self, **kwargs: dict[str, str]) -> list[Vehicle]:
+    def search_vehicles(self, **kwargs: str) -> list[Vehicle]:
         # return self.vehicle_repository.search(text, status)
         return self.vehicle_repository.search(
             **{k: v for k, v in kwargs.items() if k in ("brand", "model", "plate", "status")}

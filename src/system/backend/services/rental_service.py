@@ -17,7 +17,7 @@ class RentalService:
         self.customer_repository = customer_repository
         self.vehicle_repository = vehicle_repository
 
-    def create_rental(self, customer_code: str, vehicle_plate: str, pickup_date: date | str, days: int | str) -> Rental:
+    def create_rental(self, customer_code: str, vehicle_plate: str, pickup_date: date, days: int) -> Rental:
         customer = self.customer_repository.get_by_code(customer_code)
 
         if customer is None:
@@ -30,15 +30,14 @@ class RentalService:
         if not vehicle.is_available or self.rental_repository.has_active_rental_for_vehicle(vehicle.plate):
             raise ValueError("Vehicle is not available for rental.")
 
-        parsed_date = date.fromisoformat(pickup_date) if isinstance(pickup_date, str) else pickup_date
-        rental = Rental.create(customer, vehicle, parsed_date, int(days))
+        rental = Rental.create(customer, vehicle, pickup_date, days)
 
         vehicle.set_rented()
         self.vehicle_repository.update(vehicle)
         return self.rental_repository.insert(rental)
 
-    def finish_rental(self, rental_id: int | str) -> Rental:
-        rental = self.get_rental(int(rental_id))
+    def finish_rental(self, rental_id: int) -> Rental:
+        rental = self.get_rental(rental_id)
 
         if rental.status != ACTIVE:
             raise ValueError("Rental is already finished.")
@@ -72,8 +71,8 @@ class RentalService:
     def list_active_rentals(self) -> list[Rental]:
         return [rental for rental in self.list_rentals() if rental.status == ACTIVE]
 
-    def calc_late_fee(self, rental_id: int | str, reference_date: date | None = None) -> float:
-        rental = self.get_rental(int(rental_id))
+    def calc_late_fee(self, rental_id: int, reference_date: date | None = None) -> float:
+        rental = self.get_rental(rental_id)
 
         if rental.status != ACTIVE:
             return 0.0

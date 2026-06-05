@@ -1,4 +1,4 @@
-from frontend import RentalSystemApp
+from .frontend import RentalSystemApp
 
 
 def main() -> None:

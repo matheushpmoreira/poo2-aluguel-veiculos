@@ -153,7 +153,7 @@ class VehicleAdminFrame(BaseFrame):
 
     def create_vehicle(self) -> None:
         try:
-            self.controller.vehicles.create_vehicle(**self._values())
+            self.controller.post_vehicle(self._values())
             self.show_success("Vehicle created.")
             self.clear_form()
             self.refresh()
@@ -162,7 +162,7 @@ class VehicleAdminFrame(BaseFrame):
 
     def update_vehicle(self) -> None:
         try:
-            self.controller.vehicles.update_vehicle(**self._values())
+            self.controller.put_vehicle(self.fields["plate"].get(), self._values())
             self.show_success("Vehicle updated.")
             self.refresh()
         except Exception as error:
@@ -170,7 +170,7 @@ class VehicleAdminFrame(BaseFrame):
 
     def delete_vehicle(self) -> None:
         try:
-            self.controller.vehicles.delete_vehicle(self.fields["plate"].get())
+            self.controller.delete_vehicle(self.fields["plate"].get())
             self.show_success("Vehicle deleted.")
             self.clear_form()
             self.refresh()
@@ -179,7 +179,8 @@ class VehicleAdminFrame(BaseFrame):
 
     def refresh(self) -> None:
         self.tree.delete(*self.tree.get_children())
-        vehicles = self.controller.vehicles.search_vehicles(self.search_text.get(), self.search_status.get())
+        search_text = self.search_text.get()
+        vehicles = self.controller.get_vehicles({"q": search_text, "status": self.search_status.get()})
         for vehicle in vehicles:
             self.tree.insert(
                 "",
@@ -273,7 +274,7 @@ class CustomerAdminFrame(BaseFrame):
 
     def create_customer(self) -> None:
         try:
-            self.controller.customers.create_customer(**self._values())
+            self.controller.post_customer(self._values())
             self.show_success("Customer created.")
             self.clear_form()
             self.refresh()
@@ -282,7 +283,7 @@ class CustomerAdminFrame(BaseFrame):
 
     def update_customer(self) -> None:
         try:
-            self.controller.customers.update_customer(**self._values())
+            self.controller.put_customer(self.fields["code"].get(), self._values())
             self.show_success("Customer updated.")
             self.refresh()
         except Exception as error:
@@ -290,7 +291,7 @@ class CustomerAdminFrame(BaseFrame):
 
     def delete_customer(self) -> None:
         try:
-            self.controller.customers.delete_customer(self.fields["code"].get())
+            self.controller.delete_customer(self.fields["code"].get())
             self.show_success("Customer deleted.")
             self.clear_form()
             self.refresh()
@@ -299,7 +300,7 @@ class CustomerAdminFrame(BaseFrame):
 
     def refresh(self) -> None:
         self.tree.delete(*self.tree.get_children())
-        for customer in self.controller.customers.list_customers():
+        for customer in self.controller.get_customers():
             self.tree.insert(
                 "",
                 "end",
@@ -389,8 +390,13 @@ class RentalAdminFrame(BaseFrame):
         try:
             customer_code = self.customer_options[self.customer_value.get()]
             vehicle_plate = self.vehicle_options[self.vehicle_value.get()]
-            rental = self.controller.rentals.create_rental(
-                customer_code, vehicle_plate, self.pickup_date.get(), self.days.get()
+            rental = self.controller.post_rental(
+                {
+                    "customer_code": customer_code,
+                    "vehicle_plate": vehicle_plate,
+                    "pickup_date": self.pickup_date.get(),
+                    "days": self.days.get(),
+                }
             )
             self.show_success(f"Rental {rental.rental_id} created. Total: {rental.total_amount:.2f}")
             self.refresh()
@@ -404,15 +410,15 @@ class RentalAdminFrame(BaseFrame):
             return
         rental_id = self.tree.item(selected[0], "values")[0]
         try:
-            self.controller.rentals.finish_rental(rental_id)
+            self.controller.post_rental_finish(rental_id)
             self.show_success("Rental finished.")
             self.refresh()
         except Exception as error:
             self.show_error(error)
 
     def refresh(self) -> None:
-        customers = self.controller.customers.list_customers()
-        vehicles = self.controller.vehicles.search_vehicles(status="available")
+        customers = self.controller.get_customers()
+        vehicles = self.controller.get_vehicles({"status": "available"})
         self.customer_options = {f"{customer.code} - {customer.name}": customer.code for customer in customers}
         self.vehicle_options = {
             f"{vehicle.plate} - {vehicle.brand} {vehicle.model} ({vehicle.daily_rate:.2f})": vehicle.plate
@@ -426,7 +432,7 @@ class RentalAdminFrame(BaseFrame):
             self.vehicle_value.set(next(iter(self.vehicle_options)))
 
         self.tree.delete(*self.tree.get_children())
-        for rental in self.controller.rentals.list_rentals():
+        for rental in self.controller.get_rentals():
             self.tree.insert(
                 "",
                 "end",
@@ -499,14 +505,14 @@ class ReportFrame(BaseFrame):
     def refresh(self) -> None:
         self.available_tree.delete(*self.available_tree.get_children())
         self.active_tree.delete(*self.active_tree.get_children())
-        for vehicle in self.controller.vehicles.search_vehicles(status="available"):
+        for vehicle in self.controller.get_vehicles({"status": "available"}):
             self.available_tree.insert(
                 "",
                 "end",
                 values=(vehicle.plate, vehicle.brand, vehicle.model, vehicle.vehicle_type, f"{vehicle.daily_rate:.2f}"),
             )
-        for rental in self.controller.rentals.list_active_rentals():
-            late_fee = self.controller.rentals.calculate_late_fee(rental.rental_id or 0)
+        for rental in self.controller.get_rentals({"status": "active"}):
+            late_fee = self.controller.get_rental_late_fee(rental.rental_id or 0)
             self.active_tree.insert(
                 "",
                 "end",
@@ -535,14 +541,14 @@ class ReportFrame(BaseFrame):
                 writer = csv.writer(file)
                 writer.writerow(["Available vehicles"])
                 writer.writerow(["plate", "brand", "model", "type", "daily_rate"])
-                for vehicle in self.controller.vehicles.search_vehicles(status="available"):
+                for vehicle in self.controller.get_vehicles({"status": "available"}):
                     writer.writerow(
                         [vehicle.plate, vehicle.brand, vehicle.model, vehicle.vehicle_type, f"{vehicle.daily_rate:.2f}"]
                     )
                 writer.writerow([])
                 writer.writerow(["Active rentals"])
                 writer.writerow(["id", "customer", "vehicle", "expected_return", "total", "late_fee"])
-                for rental in self.controller.rentals.list_active_rentals():
+                for rental in self.controller.get_rentals({"status": "active"}):
                     writer.writerow(
                         [
                             rental.rental_id,
@@ -550,7 +556,7 @@ class ReportFrame(BaseFrame):
                             rental.vehicle_plate,
                             rental.expected_return_date.isoformat(),
                             f"{rental.total_amount:.2f}",
-                            f"{self.controller.rentals.calculate_late_fee(rental.rental_id or 0):.2f}",
+                            f"{self.controller.get_rental_late_fee(rental.rental_id or 0):.2f}",
                         ]
                     )
             self.show_success(f"Report exported to {file_path}.")
@@ -636,7 +642,9 @@ class PublicArea(BaseFrame):
 
     def login(self) -> None:
         try:
-            self.customer = self.controller.customers.login(self.code.get(), self.password.get())
+            self.customer = self.controller.post_customer_login(
+                {"code": self.code.get(), "password": self.password.get()}
+            )
             self.status_text.set(f"Logged in as {self.customer.name}")
             self.refresh_public_lists()
         except Exception as error:
@@ -660,8 +668,13 @@ class PublicArea(BaseFrame):
             return
         vehicle_plate = self.available_tree.item(selected[0], "values")[0]
         try:
-            rental = self.controller.rentals.create_rental(
-                self.customer.code, vehicle_plate, self.pickup_date.get(), self.days.get()
+            rental = self.controller.post_rental(
+                {
+                    "customer_code": self.customer.code,
+                    "vehicle_plate": vehicle_plate,
+                    "pickup_date": self.pickup_date.get(),
+                    "days": self.days.get(),
+                }
             )
             self.show_success(f"Rental {rental.rental_id} created. Total: {rental.total_amount:.2f}")
             self.refresh_public_lists()
@@ -671,7 +684,7 @@ class PublicArea(BaseFrame):
     def refresh_public_lists(self) -> None:
         self.available_tree.delete(*self.available_tree.get_children())
         self.rental_tree.delete(*self.rental_tree.get_children())
-        for vehicle in self.controller.vehicles.search_vehicles(status="available"):
+        for vehicle in self.controller.get_vehicles({"status": "available"}):
             self.available_tree.insert(
                 "",
                 "end",
@@ -686,7 +699,7 @@ class PublicArea(BaseFrame):
             )
         if self.customer is None:
             return
-        for rental in self.controller.rentals.list_customer_rentals(self.customer.code):
+        for rental in self.controller.get_rentals({"customer_code": self.customer.code}):
             self.rental_tree.insert(
                 "",
                 "end",

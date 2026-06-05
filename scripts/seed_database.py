@@ -8,7 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.controllers import AppController
+from system.backend.controllers import AppController
 
 
 def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
@@ -30,18 +30,43 @@ def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
 
     for plate, brand, model, year, vehicle_type, rate in vehicles:
         try:
-            controller.vehicles.create_vehicle(plate, brand, model, year, vehicle_type, rate)
+            controller.post_vehicle(
+                {
+                    "plate": plate,
+                    "brand": brand,
+                    "model": model,
+                    "year": year,
+                    "vehicle_type": vehicle_type,
+                    "daily_rate": rate,
+                }
+            )
         except ValueError:
             pass
 
     for code, name, phone, email, address, password in customers:
         try:
-            controller.customers.create_customer(code, name, phone, email, address, password)
+            controller.post_customer(
+                {
+                    "code": code,
+                    "name": name,
+                    "phone": phone,
+                    "email": email,
+                    "address": address,
+                    "password": password,
+                }
+            )
         except ValueError:
             pass
 
     try:
-        controller.rentals.create_rental("11122233344", "ABC1D23", "2026-05-31", 3)
+        controller.post_rental(
+            {
+                "customer_code": "11122233344",
+                "vehicle_plate": "ABC1D23",
+                "pickup_date": "2026-05-31",
+                "days": 3,
+            }
+        )
     except ValueError:
         pass
 

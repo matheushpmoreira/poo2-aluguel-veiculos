@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from itertools import chain, repeat
-
 from system.backend.database import Database
 from system.backend.models.vehicle import Vehicle, create_vehicle
 
@@ -66,31 +64,34 @@ class VehicleRepository:
             rows = connection.execute("SELECT * FROM vehicles ORDER BY plate").fetchall()
         return [self._parse_row(row) for row in rows]
 
-    # DO NOT DELETE: confirm refactor is working
-    # def search(self, text: str = "", status: str = "") -> list[Vehicle]:
-    def search(self, brand: str = "", model: str = "", plate: str = "", status: str = "") -> list[Vehicle]:
+    def search(self, *, brand: str = "", model: str = "", plate: str = "", status: str = "") -> list[Vehicle]:
         query = """
             SELECT * FROM vehicles
-            WHERE (? = '' OR brand LIKE ? OR model LIKE ? OR plate LIKE ?) AND (? = '' OR status = ?)
+            WHERE (? = '' OR lower(brand) LIKE ?)
+              AND (? = '' OR lower(model) LIKE ?)
+              AND (? = '' OR lower(plate) LIKE ?)
+              AND (? = '' OR status = ?)
             ORDER BY plate
         """
 
-        parameters = (brand, brand, model, model, plate, plate, status, status)
+        normalized_brand = brand.strip().lower()
+        normalized_model = model.strip().lower()
+        normalized_plate = plate.strip().lower()
+        normalized_status = status.strip().lower()
+        parameters = (
+            normalized_brand,
+            f"%{normalized_brand}%",
+            normalized_model,
+            f"%{normalized_model}%",
+            normalized_plate,
+            f"%{normalized_plate}%",
+            normalized_status,
+            normalized_status,
+        )
 
         with self.database.connect() as connection:
             rows = connection.execute(query, parameters).fetchall()
         return [self._parse_row(row) for row in rows]
-
-        # DO NOT DELETE: confirm refactor is working
-        # normalized_text = text.strip().lower()
-        # pattern = f"%{normalized_text}%"
-        # normalized_status = status.strip().lower()
-        # with self.database.connect() as connection:
-        #     rows = connection.execute(
-        #         query,
-        #         (normalized_text, pattern, pattern, pattern, normalized_status, normalized_status),
-        #     ).fetchall()
-        # return [self._parse_row(row) for row in rows]
 
     @staticmethod
     def _parse_row(row) -> Vehicle:
