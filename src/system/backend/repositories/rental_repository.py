@@ -10,7 +10,7 @@ class RentalRepository:
     def __init__(self, database: Database) -> None:
         self.database = database
 
-    def save(self, rental: Rental) -> Rental:
+    def insert(self, rental: Rental) -> Rental:
         with self.database.connect() as connection:
             cursor = connection.execute(
                 """
@@ -28,12 +28,14 @@ class RentalRepository:
                     rental.status,
                 ),
             )
+
             rental.rental_id = cursor.lastrowid
         return rental
 
     def update(self, rental: Rental) -> None:
         if rental.rental_id is None:
             raise ValueError("Rental id is required.")
+
         with self.database.connect() as connection:
             cursor = connection.execute(
                 """
@@ -53,26 +55,27 @@ class RentalRepository:
                     rental.rental_id,
                 ),
             )
+
             if cursor.rowcount == 0:
                 raise ValueError("Rental was not found.")
 
     def get_by_id(self, rental_id: int) -> Rental | None:
         with self.database.connect() as connection:
             row = connection.execute("SELECT * FROM rentals WHERE rental_id = ?", (rental_id,)).fetchone()
-        return self._to_rental(row) if row else None
+        return self._parse_row(row) if row else None
 
-    def list_all(self) -> list[Rental]:
+    def get_all(self) -> list[Rental]:
         with self.database.connect() as connection:
             rows = connection.execute("SELECT * FROM rentals ORDER BY rental_id DESC").fetchall()
-        return [self._to_rental(row) for row in rows]
+        return [self._parse_row(row) for row in rows]
 
-    def list_by_customer(self, customer_code: str) -> list[Rental]:
+    def get_by_customer(self, customer_code: str) -> list[Rental]:
         with self.database.connect() as connection:
             rows = connection.execute(
                 "SELECT * FROM rentals WHERE customer_code = ? ORDER BY rental_id DESC",
                 (customer_code.strip(),),
             ).fetchall()
-        return [self._to_rental(row) for row in rows]
+        return [self._parse_row(row) for row in rows]
 
     def has_active_rental_for_vehicle(self, vehicle_plate: str) -> bool:
         with self.database.connect() as connection:
@@ -82,7 +85,8 @@ class RentalRepository:
             ).fetchone()
         return row is not None
 
-    def _to_rental(self, row) -> Rental:
+    @staticmethod
+    def _parse_row(row) -> Rental:
         return Rental(
             rental_id=row["rental_id"],
             customer_code=row["customer_code"],

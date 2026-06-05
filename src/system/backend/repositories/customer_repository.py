@@ -8,7 +8,7 @@ class CustomerRepository:
     def __init__(self, database: Database) -> None:
         self.database = database
 
-    def save(self, customer: Customer) -> None:
+    def insert(self, customer: Customer) -> None:
         with self.database.connect() as connection:
             connection.execute(
                 """
@@ -28,6 +28,7 @@ class CustomerRepository:
                 """,
                 (customer.name, customer.phone, customer.email, customer.address, customer.password, customer.code),
             )
+
             if cursor.rowcount == 0:
                 raise ValueError("Customer was not found.")
 
@@ -40,14 +41,15 @@ class CustomerRepository:
     def get_by_code(self, code: str) -> Customer | None:
         with self.database.connect() as connection:
             row = connection.execute("SELECT * FROM customers WHERE code = ?", (code.strip(),)).fetchone()
-        return self._to_customer(row) if row else None
+        return self._parse_row(row) if row else None
 
-    def list_all(self) -> list[Customer]:
+    def get_all(self) -> list[Customer]:
         with self.database.connect() as connection:
             rows = connection.execute("SELECT * FROM customers ORDER BY name").fetchall()
-        return [self._to_customer(row) for row in rows]
+        return [self._parse_row(row) for row in rows]
 
-    def _to_customer(self, row) -> Customer:
+    @staticmethod
+    def _parse_row(row) -> Customer:
         return Customer(
             code=row["code"],
             name=row["name"],

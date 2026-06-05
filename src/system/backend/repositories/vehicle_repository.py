@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from itertools import chain, repeat
+
 from system.backend.database import Database
 from system.backend.models.vehicle import Vehicle, create_vehicle
 
@@ -8,7 +10,7 @@ class VehicleRepository:
     def __init__(self, database: Database) -> None:
         self.database = database
 
-    def save(self, vehicle: Vehicle) -> None:
+    def insert(self, vehicle: Vehicle) -> None:
         with self.database.connect() as connection:
             connection.execute(
                 """
@@ -44,6 +46,7 @@ class VehicleRepository:
                     vehicle.plate,
                 ),
             )
+
             if cursor.rowcount == 0:
                 raise ValueError("Vehicle was not found.")
 
@@ -56,31 +59,41 @@ class VehicleRepository:
     def get_by_plate(self, plate: str) -> Vehicle | None:
         with self.database.connect() as connection:
             row = connection.execute("SELECT * FROM vehicles WHERE plate = ?", (plate.strip().upper(),)).fetchone()
-        return self._to_vehicle(row) if row else None
+        return self._parse_row(row) if row else None
 
-    def list_all(self) -> list[Vehicle]:
+    def get_all(self) -> list[Vehicle]:
         with self.database.connect() as connection:
             rows = connection.execute("SELECT * FROM vehicles ORDER BY plate").fetchall()
-        return [self._to_vehicle(row) for row in rows]
+        return [self._parse_row(row) for row in rows]
 
-    def search(self, text: str = "", status: str = "") -> list[Vehicle]:
+    # DO NOT DELETE: confirm refactor is working
+    # def search(self, text: str = "", status: str = "") -> list[Vehicle]:
+    def search(self, brand: str = "", model: str = "", plate: str = "", status: str = "") -> list[Vehicle]:
         query = """
             SELECT * FROM vehicles
-            WHERE (? = '' OR lower(brand) LIKE ? OR lower(model) LIKE ? OR lower(plate) LIKE ?)
-              AND (? = '' OR status = ?)
+            WHERE (? = '' OR brand LIKE ? OR model LIKE ? OR plate LIKE ?) AND (? = '' OR status = ?)
             ORDER BY plate
         """
-        normalized_text = text.strip().lower()
-        pattern = f"%{normalized_text}%"
-        normalized_status = status.strip().lower()
-        with self.database.connect() as connection:
-            rows = connection.execute(
-                query,
-                (normalized_text, pattern, pattern, pattern, normalized_status, normalized_status),
-            ).fetchall()
-        return [self._to_vehicle(row) for row in rows]
 
-    def _to_vehicle(self, row) -> Vehicle:
+        parameters = (brand, brand, model, model, plate, plate, status, status)
+
+        with self.database.connect() as connection:
+            rows = connection.execute(query, parameters).fetchall()
+        return [self._parse_row(row) for row in rows]
+
+        # DO NOT DELETE: confirm refactor is working
+        # normalized_text = text.strip().lower()
+        # pattern = f"%{normalized_text}%"
+        # normalized_status = status.strip().lower()
+        # with self.database.connect() as connection:
+        #     rows = connection.execute(
+        #         query,
+        #         (normalized_text, pattern, pattern, pattern, normalized_status, normalized_status),
+        #     ).fetchall()
+        # return [self._parse_row(row) for row in rows]
+
+    @staticmethod
+    def _parse_row(row) -> Vehicle:
         return create_vehicle(
             plate=row["plate"],
             brand=row["brand"],
