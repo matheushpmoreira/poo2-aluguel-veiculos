@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
+from system.backend.errors import ConflictError, NotFoundError, UnauthorizedError
 from system.backend.models.customer import Customer
 from system.backend.repositories.customer_repository import CustomerRepository
 
@@ -16,7 +17,7 @@ class CustomerService:
         try:
             self.customer_repository.insert(customer)
         except sqlite3.IntegrityError as exc:
-            raise ValueError("A customer with this code already exists.") from exc
+            raise ConflictError("A customer with this code already exists.") from exc
 
         return customer
 
@@ -29,13 +30,13 @@ class CustomerService:
         try:
             self.customer_repository.delete(code)
         except sqlite3.IntegrityError as exc:
-            raise ValueError("Customer has rental history and cannot be deleted.") from exc
+            raise ConflictError("Customer has rental history and cannot be deleted.") from exc
 
     def get_customer(self, code: str) -> Customer:
         customer = self.customer_repository.get_by_code(code)
 
         if customer is None:
-            raise ValueError("Customer was not found.")
+            raise NotFoundError("Customer was not found.")
 
         return customer
 
@@ -46,6 +47,6 @@ class CustomerService:
         customer = self.get_customer(code)
 
         if not customer.check_password(password):
-            raise ValueError("Invalid customer code or password.")
+            raise UnauthorizedError("Invalid customer code or password.")
 
         return customer

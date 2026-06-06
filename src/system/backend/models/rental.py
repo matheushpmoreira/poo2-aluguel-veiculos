@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
+from system.backend.errors import UnprocessableEntityError
+
 from .customer import Customer
 from .vehicle import Vehicle
 
@@ -36,16 +38,16 @@ class Rental:
         try:
             self.status = RentalStatus(str(self.status).strip().lower())
         except ValueError as exc:
-            raise ValueError("Rental status must be active or finished.") from exc
+            raise UnprocessableEntityError("Rental status must be active or finished.") from exc
 
         if not self.customer_code or not self.vehicle_plate:
-            raise ValueError("Rental customer and vehicle are required.")
+            raise UnprocessableEntityError("Rental customer and vehicle are required.")
         if self.days <= 0:
-            raise ValueError("Rental days must be greater than zero.")
+            raise UnprocessableEntityError("Rental days must be greater than zero.")
         if self.total_amount < 0:
-            raise ValueError("Rental total amount cannot be negative.")
+            raise UnprocessableEntityError("Rental total amount cannot be negative.")
         if self.expected_return_date < self.pickup_date:
-            raise ValueError("Expected return date cannot be before pickup date.")
+            raise UnprocessableEntityError("Expected return date cannot be before pickup date.")
 
     @classmethod
     def create(cls, customer: Customer, vehicle: Vehicle, pickup_date: date, days: int) -> "Rental":

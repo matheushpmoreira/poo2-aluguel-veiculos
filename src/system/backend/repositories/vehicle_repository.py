@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from system.backend.database import Database
+from system.backend.errors import NotFoundError
 from system.backend.models.vehicle import Vehicle
 
 
@@ -46,13 +47,13 @@ class VehicleRepository:
             )
 
             if cursor.rowcount == 0:
-                raise ValueError("Vehicle was not found.")
+                raise NotFoundError("Vehicle was not found.")
 
     def delete(self, plate: str) -> None:
         with self.database.connect() as connection:
             cursor = connection.execute("DELETE FROM vehicles WHERE plate = ?", (plate.strip().upper(),))
             if cursor.rowcount == 0:
-                raise ValueError("Vehicle was not found.")
+                raise NotFoundError("Vehicle was not found.")
 
     def get_by_plate(self, plate: str) -> Vehicle | None:
         with self.database.connect() as connection:

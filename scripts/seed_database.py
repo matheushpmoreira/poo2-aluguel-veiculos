@@ -3,12 +3,12 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from system.backend.controllers import AppController
+from system.backend.errors import BackendError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from system.backend.controllers import AppController
 
 
 def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
@@ -20,7 +20,7 @@ def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
     vehicles = [
         ("ABC1D23", "Toyota", "Corolla", 2022, "car", 180.0),
         ("MOT9A87", "Honda", "CB 500F", 2021, "motorcycle", 95.0),
-        ("TRK4B56", "Ford", "Ranger", 2023, "pickup truck", 260.0),
+        ("TRK4B56", "Ford", "Ranger", 2023, "truck", 260.0),
         ("VAN7C45", "Mercedes-Benz", "Sprinter", 2020, "van", 320.0),
     ]
     customers = [
@@ -40,7 +40,7 @@ def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
                     "daily_rate": rate,
                 }
             )
-        except ValueError:
+        except BackendError:
             pass
 
     for code, name, phone, email, address, password in customers:
@@ -55,7 +55,7 @@ def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
                     "password": password,
                 }
             )
-        except ValueError:
+        except BackendError:
             pass
 
     try:
@@ -67,7 +67,7 @@ def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
                 "days": 3,
             }
         )
-    except ValueError:
+    except BackendError:
         pass
 
 

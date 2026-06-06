@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from system.backend.database import Database
+from system.backend.errors import BadRequestError, UnprocessableEntityError
 from system.backend.models import Customer, Rental, RentalStatus, Vehicle, VehicleStatus, VehicleType
 from system.backend.repositories import CustomerRepository, RentalRepository, VehicleRepository
 from system.backend.services import CustomerService, RentalService, VehicleService
@@ -149,14 +150,14 @@ class AppController:
         try:
             return int(value)
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid {field_name}.") from exc
+            raise BadRequestError(f"Invalid {field_name}.") from exc
 
     @staticmethod
     def _parse_float(value: Any, field_name: str) -> float:
         try:
             return float(value)
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid {field_name}.") from exc
+            raise BadRequestError(f"Invalid {field_name}.") from exc
 
     @staticmethod
     def _parse_date(value: Any, field_name: str) -> date:
@@ -165,25 +166,25 @@ class AppController:
         try:
             return date.fromisoformat(str(value))
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid {field_name}. Use YYYY-MM-DD.") from exc
+            raise BadRequestError(f"Invalid {field_name}. Use YYYY-MM-DD.") from exc
 
     @staticmethod
     def _parse_vehicle_status(value: Any) -> VehicleStatus:
         try:
             return VehicleStatus(str(value).strip().lower())
         except (TypeError, ValueError) as exc:
-            raise ValueError("Vehicle status must be available or rented.") from exc
+            raise UnprocessableEntityError("Vehicle status must be available or rented.") from exc
 
     @staticmethod
     def _parse_vehicle_type(value: Any) -> VehicleType:
         try:
             return VehicleType(str(value).strip().lower())
         except (TypeError, ValueError) as exc:
-            raise ValueError("Vehicle type must be car, motorcycle, pickup truck or van.") from exc
+            raise UnprocessableEntityError("Vehicle type must be car, motorcycle, truck or van.") from exc
 
     @staticmethod
     def _parse_rental_status(value: Any) -> RentalStatus:
         try:
             return RentalStatus(str(value).strip().lower())
         except (TypeError, ValueError) as exc:
-            raise ValueError("Rental status must be active or finished.") from exc
+            raise UnprocessableEntityError("Rental status must be active or finished.") from exc

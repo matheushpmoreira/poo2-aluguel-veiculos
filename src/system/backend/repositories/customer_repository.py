@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from system.backend.database import Database
+from system.backend.errors import NotFoundError
 from system.backend.models.customer import Customer
 
 
@@ -30,13 +31,13 @@ class CustomerRepository:
             )
 
             if cursor.rowcount == 0:
-                raise ValueError("Customer was not found.")
+                raise NotFoundError("Customer was not found.")
 
     def delete(self, code: str) -> None:
         with self.database.connect() as connection:
             cursor = connection.execute("DELETE FROM customers WHERE code = ?", (code.strip(),))
             if cursor.rowcount == 0:
-                raise ValueError("Customer was not found.")
+                raise NotFoundError("Customer was not found.")
 
     def get_by_code(self, code: str) -> Customer | None:
         with self.database.connect() as connection:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from system.backend.database import Database
+from system.backend.errors import NotFoundError, UnprocessableEntityError
 from system.backend.models.rental import Rental
 
 
@@ -34,7 +35,7 @@ class RentalRepository:
 
     def update(self, rental: Rental) -> None:
         if rental.rental_id is None:
-            raise ValueError("Rental id is required.")
+            raise UnprocessableEntityError("Rental id is required.")
 
         with self.database.connect() as connection:
             cursor = connection.execute(
@@ -57,7 +58,7 @@ class RentalRepository:
             )
 
             if cursor.rowcount == 0:
-                raise ValueError("Rental was not found.")
+                raise NotFoundError("Rental was not found.")
 
     def get_by_id(self, rental_id: int) -> Rental | None:
         with self.database.connect() as connection:

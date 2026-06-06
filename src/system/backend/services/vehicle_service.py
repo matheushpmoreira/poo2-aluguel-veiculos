@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
+from system.backend.errors import ConflictError, NotFoundError, UnprocessableEntityError
 from system.backend.models.vehicle import Vehicle, VehicleStatus, VehicleType
 from system.backend.repositories.vehicle_repository import VehicleRepository
 
@@ -25,7 +26,7 @@ class VehicleService:
         try:
             self.vehicle_repository.insert(vehicle)
         except sqlite3.IntegrityError as exc:
-            raise ValueError("A vehicle with this plate already exists.") from exc
+            raise ConflictError("A vehicle with this plate already exists.") from exc
         return vehicle
 
     def update_vehicle(
@@ -39,7 +40,7 @@ class VehicleService:
         status: VehicleStatus,
     ) -> Vehicle:
         if status not in VehicleStatus:
-            raise ValueError("Vehicle status must be available or rented.")
+            raise UnprocessableEntityError("Vehicle status must be available or rented.")
 
         vehicle = Vehicle(plate, brand, model, year, vehicle_type, daily_rate, status)
         self.vehicle_repository.update(vehicle)
@@ -49,17 +50,17 @@ class VehicleService:
         vehicle = self.get_vehicle(plate)
 
         if vehicle.status == VehicleStatus.RENTED:
-            raise ValueError("A rented vehicle cannot be deleted.")
+            raise ConflictError("A rented vehicle cannot be deleted.")
         try:
             self.vehicle_repository.delete(plate)
         except sqlite3.IntegrityError as exc:
-            raise ValueError("Vehicle has rental history and cannot be deleted.") from exc
+            raise ConflictError("Vehicle has rental history and cannot be deleted.") from exc
 
     def get_vehicle(self, plate: str) -> Vehicle:
         vehicle = self.vehicle_repository.get_by_plate(plate)
 
         if vehicle is None:
-            raise ValueError("Vehicle was not found.")
+            raise NotFoundError("Vehicle was not found.")
 
         return vehicle
 

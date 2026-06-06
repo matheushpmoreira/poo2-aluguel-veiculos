@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from system.backend.errors import ConflictError, NotFoundError
 from system.backend.models.rental import ACTIVE, Rental
 from system.backend.repositories import CustomerRepository, RentalRepository, VehicleRepository
 
@@ -21,14 +22,14 @@ class RentalService:
         customer = self.customer_repository.get_by_code(customer_code)
 
         if customer is None:
-            raise ValueError("Rental requires a registered customer.")
+            raise NotFoundError("Rental requires a registered customer.")
 
         vehicle = self.vehicle_repository.get_by_plate(vehicle_plate)
 
         if vehicle is None:
-            raise ValueError("Rental requires a registered vehicle.")
+            raise NotFoundError("Rental requires a registered vehicle.")
         if not vehicle.is_available or self.rental_repository.has_active_rental_for_vehicle(vehicle.plate):
-            raise ValueError("Vehicle is not available for rental.")
+            raise ConflictError("Vehicle is not available for rental.")
 
         rental = Rental.create(customer, vehicle, pickup_date, days)
 
@@ -40,12 +41,12 @@ class RentalService:
         rental = self.get_rental(rental_id)
 
         if rental.status != ACTIVE:
-            raise ValueError("Rental is already finished.")
+            raise ConflictError("Rental is already finished.")
 
         vehicle = self.vehicle_repository.get_by_plate(rental.vehicle_plate)
 
         if vehicle is None:
-            raise ValueError("Rental vehicle was not found.")
+            raise NotFoundError("Rental vehicle was not found.")
 
         rental.set_finished()
         vehicle.set_available()
@@ -58,7 +59,7 @@ class RentalService:
         rental = self.rental_repository.get_by_id(rental_id)
 
         if rental is None:
-            raise ValueError("Rental was not found.")
+            raise NotFoundError("Rental was not found.")
 
         return rental
 
@@ -85,7 +86,7 @@ class RentalService:
         vehicle = self.vehicle_repository.get_by_plate(rental.vehicle_plate)
 
         if vehicle is None:
-            raise ValueError("Rental vehicle was not found.")
+            raise NotFoundError("Rental vehicle was not found.")
 
         overdue_days = (today - rental.expected_return_date).days
         return round(vehicle.daily_rate * 0.2 * overdue_days, 2)
