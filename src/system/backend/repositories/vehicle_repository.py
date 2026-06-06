@@ -47,13 +47,13 @@ class VehicleRepository:
             )
 
             if cursor.rowcount == 0:
-                raise NotFoundError("Vehicle was not found.")
+                raise NotFoundError("Veículo não encontrado.")
 
     def delete(self, plate: str) -> None:
         with self.database.connect() as connection:
             cursor = connection.execute("DELETE FROM vehicles WHERE plate = ?", (plate.strip().upper(),))
             if cursor.rowcount == 0:
-                raise NotFoundError("Vehicle was not found.")
+                raise NotFoundError("Veículo não encontrado.")
 
     def get_by_plate(self, plate: str) -> Vehicle | None:
         with self.database.connect() as connection:

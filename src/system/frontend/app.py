@@ -10,15 +10,47 @@ from system.backend.controllers import AppController
 from system.backend.models import RentalStatus, VehicleStatus, VehicleType
 
 
-VEHICLE_TYPES = tuple(vehicle_type.value for vehicle_type in VehicleType)
-VEHICLE_STATUSES = tuple(status.value for status in VehicleStatus)
+VEHICLE_TYPE_LABELS = {
+    VehicleType.CAR.value: "carro",
+    VehicleType.MOTORCYCLE.value: "moto",
+    VehicleType.TRUCK.value: "caminhão",
+    VehicleType.VAN.value: "van",
+}
+VEHICLE_STATUS_LABELS = {
+    VehicleStatus.AVAILABLE.value: "disponível",
+    VehicleStatus.RENTED.value: "alugado",
+}
+RENTAL_STATUS_LABELS = {
+    RentalStatus.ACTIVE.value: "ativo",
+    RentalStatus.FINISHED.value: "finalizado",
+}
+VEHICLE_TYPE_VALUES = {label: value for value, label in VEHICLE_TYPE_LABELS.items()}
+VEHICLE_STATUS_VALUES = {label: value for value, label in VEHICLE_STATUS_LABELS.items()}
+
+VEHICLE_TYPES = tuple(VEHICLE_TYPE_LABELS[vehicle_type.value] for vehicle_type in VehicleType)
+VEHICLE_STATUSES = tuple(VEHICLE_STATUS_LABELS[status.value] for status in VehicleStatus)
+
+
+def vehicle_type_label(value: VehicleType | str) -> str:
+    key = value.value if isinstance(value, VehicleType) else value
+    return VEHICLE_TYPE_LABELS.get(key, str(value))
+
+
+def vehicle_status_label(value: VehicleStatus | str) -> str:
+    key = value.value if isinstance(value, VehicleStatus) else value
+    return VEHICLE_STATUS_LABELS.get(key, str(value))
+
+
+def rental_status_label(value: RentalStatus | str) -> str:
+    key = value.value if isinstance(value, RentalStatus) else value
+    return RENTAL_STATUS_LABELS.get(key, str(value))
 
 
 class RentalSystemApp(tk.Tk):
     def __init__(self, controller: AppController | None = None) -> None:
         super().__init__()
         self.controller = controller or AppController()
-        self.title("Vehicle Rental System")
+        self.title("Sistema de Aluguel de Veículos")
         self.geometry("1120x720")
         self.minsize(980, 620)
         self._configure_style()
@@ -34,8 +66,8 @@ class RentalSystemApp(tk.Tk):
     def _build_layout(self) -> None:
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
-        notebook.add(AdminPanel(notebook, self.controller), text="Admin Panel")
-        notebook.add(PublicArea(notebook, self.controller), text="Public Area")
+        notebook.add(AdminPanel(notebook, self.controller), text="Painel Administrativo")
+        notebook.add(PublicArea(notebook, self.controller), text="Área Pública")
 
 
 class BaseFrame(ttk.Frame):
@@ -44,16 +76,16 @@ class BaseFrame(ttk.Frame):
         self.controller = controller
 
     def show_error(self, error: Exception) -> None:
-        messagebox.showerror("Error", str(error))
+        messagebox.showerror("Erro", str(error))
 
     def show_success(self, message: str) -> None:
-        messagebox.showinfo("Success", message)
+        messagebox.showinfo("Sucesso", message)
 
 
 class AdminPanel(BaseFrame):
     def __init__(self, parent: tk.Widget, controller: AppController) -> None:
         super().__init__(parent, controller)
-        header = ttk.Label(self, text="Administrative operations", style="Title.TLabel")
+        header = ttk.Label(self, text="Operações administrativas", style="Title.TLabel")
         header.pack(anchor="w", pady=(0, 8))
 
         notebook = ttk.Notebook(self)
@@ -62,10 +94,10 @@ class AdminPanel(BaseFrame):
         self.customer_frame = CustomerAdminFrame(notebook, controller)
         self.rental_frame = RentalAdminFrame(notebook, controller)
         self.report_frame = ReportFrame(notebook, controller)
-        notebook.add(self.vehicle_frame, text="Vehicles")
-        notebook.add(self.customer_frame, text="Customers")
-        notebook.add(self.rental_frame, text="Rentals")
-        notebook.add(self.report_frame, text="Reports")
+        notebook.add(self.vehicle_frame, text="Veículos")
+        notebook.add(self.customer_frame, text="Clientes")
+        notebook.add(self.rental_frame, text="Aluguéis")
+        notebook.add(self.report_frame, text="Relatórios")
         notebook.bind("<<NotebookTabChanged>>", self._refresh_current_tab)
 
     def _refresh_current_tab(self, _event: tk.Event) -> None:
@@ -94,19 +126,19 @@ class VehicleAdminFrame(BaseFrame):
     def _build(self) -> None:
         container = ttk.Frame(self)
         container.pack(fill="both", expand=True)
-        form = ttk.LabelFrame(container, text="Vehicle registration", padding=10)
+        form = ttk.LabelFrame(container, text="Cadastro de veículo", padding=10)
         form.pack(side="left", fill="y", padx=(0, 10))
 
-        self._entry(form, "Plate", "plate", 0)
-        self._entry(form, "Brand", "brand", 1)
-        self._entry(form, "Model", "model", 2)
-        self._entry(form, "Year", "year", 3)
-        ttk.Label(form, text="Type").grid(row=4, column=0, sticky="w", pady=3)
+        self._entry(form, "Placa", "plate", 0)
+        self._entry(form, "Marca", "brand", 1)
+        self._entry(form, "Modelo", "model", 2)
+        self._entry(form, "Ano", "year", 3)
+        ttk.Label(form, text="Tipo").grid(row=4, column=0, sticky="w", pady=3)
         ttk.Combobox(form, textvariable=self.fields["vehicle_type"], values=VEHICLE_TYPES, state="readonly").grid(
             row=4, column=1, sticky="ew", pady=3
         )
-        self._entry(form, "Daily rate", "daily_rate", 5)
-        ttk.Label(form, text="Status").grid(row=6, column=0, sticky="w", pady=3)
+        self._entry(form, "Valor da diária", "daily_rate", 5)
+        ttk.Label(form, text="Situação").grid(row=6, column=0, sticky="w", pady=3)
         ttk.Combobox(form, textvariable=self.fields["status"], values=VEHICLE_STATUSES, state="readonly").grid(
             row=6, column=1, sticky="ew", pady=3
         )
@@ -114,10 +146,10 @@ class VehicleAdminFrame(BaseFrame):
 
         buttons = ttk.Frame(form)
         buttons.grid(row=7, column=0, columnspan=2, sticky="ew", pady=(10, 0))
-        ttk.Button(buttons, text="Create", command=self.create_vehicle).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Update", command=self.update_vehicle).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Delete", command=self.delete_vehicle).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Clear", command=self.clear_form).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Cadastrar", command=self.create_vehicle).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Atualizar", command=self.update_vehicle).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Remover", command=self.delete_vehicle).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Limpar", command=self.clear_form).pack(fill="x", pady=2)
 
         list_area = ttk.Frame(container)
         list_area.pack(side="left", fill="both", expand=True)
@@ -127,7 +159,7 @@ class VehicleAdminFrame(BaseFrame):
         ttk.Combobox(
             filters, textvariable=self.search_status, values=("", *VEHICLE_STATUSES), state="readonly", width=14
         ).pack(side="left", padx=(0, 6))
-        ttk.Button(filters, text="Search", command=self.refresh).pack(side="left")
+        ttk.Button(filters, text="Buscar", command=self.refresh).pack(side="left")
 
         self.tree = ttk.Treeview(
             list_area,
@@ -135,13 +167,13 @@ class VehicleAdminFrame(BaseFrame):
             show="headings",
         )
         for column, title, width in (
-            ("plate", "Plate", 90),
-            ("brand", "Brand", 120),
-            ("model", "Model", 140),
-            ("year", "Year", 70),
-            ("type", "Type", 110),
-            ("rate", "Daily rate", 90),
-            ("status", "Status", 90),
+            ("plate", "Placa", 90),
+            ("brand", "Marca", 120),
+            ("model", "Modelo", 140),
+            ("year", "Ano", 70),
+            ("type", "Tipo", 110),
+            ("rate", "Diária", 90),
+            ("status", "Situação", 90),
         ):
             self.tree.heading(column, text=title)
             self.tree.column(column, width=width)
@@ -155,7 +187,7 @@ class VehicleAdminFrame(BaseFrame):
     def create_vehicle(self) -> None:
         try:
             self.controller.post_vehicle(self._values())
-            self.show_success("Vehicle created.")
+            self.show_success("Veículo cadastrado.")
             self.clear_form()
             self.refresh()
         except Exception as error:
@@ -164,7 +196,7 @@ class VehicleAdminFrame(BaseFrame):
     def update_vehicle(self) -> None:
         try:
             self.controller.put_vehicle(self.fields["plate"].get(), self._values())
-            self.show_success("Vehicle updated.")
+            self.show_success("Veículo atualizado.")
             self.refresh()
         except Exception as error:
             self.show_error(error)
@@ -172,7 +204,7 @@ class VehicleAdminFrame(BaseFrame):
     def delete_vehicle(self) -> None:
         try:
             self.controller.delete_vehicle(self.fields["plate"].get())
-            self.show_success("Vehicle deleted.")
+            self.show_success("Veículo removido.")
             self.clear_form()
             self.refresh()
         except Exception as error:
@@ -181,7 +213,8 @@ class VehicleAdminFrame(BaseFrame):
     def refresh(self) -> None:
         self.tree.delete(*self.tree.get_children())
         search_text = self.search_text.get()
-        vehicles = self.controller.get_vehicles({"q": search_text, "status": self.search_status.get()})
+        status = VEHICLE_STATUS_VALUES.get(self.search_status.get(), "")
+        vehicles = self.controller.get_vehicles({"q": search_text, "status": status})
         for vehicle in vehicles:
             self.tree.insert(
                 "",
@@ -191,9 +224,9 @@ class VehicleAdminFrame(BaseFrame):
                     vehicle.brand,
                     vehicle.model,
                     vehicle.year,
-                    vehicle.vehicle_type.value,
+                    vehicle_type_label(vehicle.vehicle_type),
                     f"{vehicle.daily_rate:.2f}",
-                    vehicle.status.value,
+                    vehicle_status_label(vehicle.status),
                 ),
             )
 
@@ -212,7 +245,10 @@ class VehicleAdminFrame(BaseFrame):
         self.fields["status"].set(VEHICLE_STATUSES[0])
 
     def _values(self) -> dict[str, str]:
-        return {key: variable.get() for key, variable in self.fields.items()}
+        values = {key: variable.get() for key, variable in self.fields.items()}
+        values["vehicle_type"] = VEHICLE_TYPE_VALUES.get(values["vehicle_type"], values["vehicle_type"])
+        values["status"] = VEHICLE_STATUS_VALUES.get(values["status"], values["status"])
+        return values
 
 
 class CustomerAdminFrame(BaseFrame):
@@ -232,16 +268,16 @@ class CustomerAdminFrame(BaseFrame):
     def _build(self) -> None:
         container = ttk.Frame(self)
         container.pack(fill="both", expand=True)
-        form = ttk.LabelFrame(container, text="Customer registration", padding=10)
+        form = ttk.LabelFrame(container, text="Cadastro de cliente", padding=10)
         form.pack(side="left", fill="y", padx=(0, 10))
         for row, (key, label) in enumerate(
             (
-                ("code", "Code or CPF"),
-                ("name", "Name"),
-                ("phone", "Phone"),
-                ("email", "Email"),
-                ("address", "Address"),
-                ("password", "Password"),
+                ("code", "Código ou CPF"),
+                ("name", "Nome"),
+                ("phone", "Telefone"),
+                ("email", "E-mail"),
+                ("address", "Endereço"),
+                ("password", "Senha"),
             )
         ):
             ttk.Label(form, text=label).grid(row=row, column=0, sticky="w", pady=3)
@@ -250,10 +286,10 @@ class CustomerAdminFrame(BaseFrame):
 
         buttons = ttk.Frame(form)
         buttons.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(10, 0))
-        ttk.Button(buttons, text="Create", command=self.create_customer).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Update", command=self.update_customer).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Delete", command=self.delete_customer).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Clear", command=self.clear_form).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Cadastrar", command=self.create_customer).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Atualizar", command=self.update_customer).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Remover", command=self.delete_customer).pack(fill="x", pady=2)
+        ttk.Button(buttons, text="Limpar", command=self.clear_form).pack(fill="x", pady=2)
 
         self.tree = ttk.Treeview(
             container,
@@ -261,12 +297,12 @@ class CustomerAdminFrame(BaseFrame):
             show="headings",
         )
         for column, title, width in (
-            ("code", "Code", 110),
-            ("name", "Name", 160),
-            ("phone", "Phone", 110),
-            ("email", "Email", 180),
-            ("address", "Address", 220),
-            ("password", "Password", 100),
+            ("code", "Código", 110),
+            ("name", "Nome", 160),
+            ("phone", "Telefone", 110),
+            ("email", "E-mail", 180),
+            ("address", "Endereço", 220),
+            ("password", "Senha", 100),
         ):
             self.tree.heading(column, text=title)
             self.tree.column(column, width=width)
@@ -276,7 +312,7 @@ class CustomerAdminFrame(BaseFrame):
     def create_customer(self) -> None:
         try:
             self.controller.post_customer(self._values())
-            self.show_success("Customer created.")
+            self.show_success("Cliente cadastrado.")
             self.clear_form()
             self.refresh()
         except Exception as error:
@@ -285,7 +321,7 @@ class CustomerAdminFrame(BaseFrame):
     def update_customer(self) -> None:
         try:
             self.controller.put_customer(self.fields["code"].get(), self._values())
-            self.show_success("Customer updated.")
+            self.show_success("Cliente atualizado.")
             self.refresh()
         except Exception as error:
             self.show_error(error)
@@ -293,7 +329,7 @@ class CustomerAdminFrame(BaseFrame):
     def delete_customer(self) -> None:
         try:
             self.controller.delete_customer(self.fields["code"].get())
-            self.show_success("Customer deleted.")
+            self.show_success("Cliente removido.")
             self.clear_form()
             self.refresh()
         except Exception as error:
@@ -346,25 +382,25 @@ class RentalAdminFrame(BaseFrame):
     def _build(self) -> None:
         container = ttk.Frame(self)
         container.pack(fill="both", expand=True)
-        form = ttk.LabelFrame(container, text="Create rental", padding=10)
+        form = ttk.LabelFrame(container, text="Criar aluguel", padding=10)
         form.pack(side="left", fill="y", padx=(0, 10))
 
-        ttk.Label(form, text="Customer").grid(row=0, column=0, sticky="w", pady=3)
+        ttk.Label(form, text="Cliente").grid(row=0, column=0, sticky="w", pady=3)
         self.customer_combo = ttk.Combobox(form, textvariable=self.customer_value, state="readonly", width=34)
         self.customer_combo.grid(row=0, column=1, sticky="ew", pady=3)
-        ttk.Label(form, text="Vehicle").grid(row=1, column=0, sticky="w", pady=3)
+        ttk.Label(form, text="Veículo").grid(row=1, column=0, sticky="w", pady=3)
         self.vehicle_combo = ttk.Combobox(form, textvariable=self.vehicle_value, state="readonly", width=34)
         self.vehicle_combo.grid(row=1, column=1, sticky="ew", pady=3)
-        ttk.Label(form, text="Pickup date").grid(row=2, column=0, sticky="w", pady=3)
+        ttk.Label(form, text="Data de retirada").grid(row=2, column=0, sticky="w", pady=3)
         ttk.Entry(form, textvariable=self.pickup_date).grid(row=2, column=1, sticky="ew", pady=3)
-        ttk.Label(form, text="Days").grid(row=3, column=0, sticky="w", pady=3)
+        ttk.Label(form, text="Dias").grid(row=3, column=0, sticky="w", pady=3)
         ttk.Entry(form, textvariable=self.days).grid(row=3, column=1, sticky="ew", pady=3)
         form.columnconfigure(1, weight=1)
 
-        ttk.Button(form, text="Create rental", command=self.create_rental).grid(
+        ttk.Button(form, text="Criar aluguel", command=self.create_rental).grid(
             row=4, column=0, columnspan=2, sticky="ew", pady=(10, 2)
         )
-        ttk.Button(form, text="Finish selected rental", command=self.finish_selected).grid(
+        ttk.Button(form, text="Finalizar aluguel selecionado", command=self.finish_selected).grid(
             row=5, column=0, columnspan=2, sticky="ew", pady=2
         )
 
@@ -375,13 +411,13 @@ class RentalAdminFrame(BaseFrame):
         )
         for column, title, width in (
             ("id", "ID", 60),
-            ("customer", "Customer", 120),
-            ("vehicle", "Vehicle", 100),
-            ("pickup", "Pickup", 100),
-            ("return", "Expected return", 120),
-            ("days", "Days", 70),
+            ("customer", "Cliente", 120),
+            ("vehicle", "Veículo", 100),
+            ("pickup", "Retirada", 100),
+            ("return", "Devolução prevista", 120),
+            ("days", "Dias", 70),
             ("total", "Total", 90),
-            ("status", "Status", 90),
+            ("status", "Situação", 90),
         ):
             self.tree.heading(column, text=title)
             self.tree.column(column, width=width)
@@ -399,7 +435,7 @@ class RentalAdminFrame(BaseFrame):
                     "days": self.days.get(),
                 }
             )
-            self.show_success(f"Rental {rental.rental_id} created. Total: {rental.total_amount:.2f}")
+            self.show_success(f"Aluguel {rental.rental_id} criado. Total: {rental.total_amount:.2f}")
             self.refresh()
         except Exception as error:
             self.show_error(error)
@@ -407,12 +443,12 @@ class RentalAdminFrame(BaseFrame):
     def finish_selected(self) -> None:
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Selection required", "Select a rental first.")
+            messagebox.showwarning("Seleção obrigatória", "Selecione um aluguel primeiro.")
             return
         rental_id = self.tree.item(selected[0], "values")[0]
         try:
             self.controller.post_rental_finish(rental_id)
-            self.show_success("Rental finished.")
+            self.show_success("Aluguel finalizado.")
             self.refresh()
         except Exception as error:
             self.show_error(error)
@@ -445,7 +481,7 @@ class RentalAdminFrame(BaseFrame):
                     rental.expected_return_date.isoformat(),
                     rental.days,
                     f"{rental.total_amount:.2f}",
-                    rental.status.value,
+                    rental_status_label(rental.status),
                 ),
             )
 
@@ -459,14 +495,14 @@ class ReportFrame(BaseFrame):
     def _build(self) -> None:
         toolbar = ttk.Frame(self)
         toolbar.pack(fill="x", pady=(0, 8))
-        ttk.Button(toolbar, text="Refresh", command=self.refresh).pack(side="left", padx=(0, 6))
-        ttk.Button(toolbar, text="Export CSV", command=self.export_csv).pack(side="left")
+        ttk.Button(toolbar, text="Atualizar", command=self.refresh).pack(side="left", padx=(0, 6))
+        ttk.Button(toolbar, text="Exportar CSV", command=self.export_csv).pack(side="left")
 
         panes = ttk.PanedWindow(self, orient="horizontal")
         panes.pack(fill="both", expand=True)
 
-        available_box = ttk.LabelFrame(panes, text="Available vehicles", padding=8)
-        active_box = ttk.LabelFrame(panes, text="Active rentals", padding=8)
+        available_box = ttk.LabelFrame(panes, text="Veículos disponíveis", padding=8)
+        active_box = ttk.LabelFrame(panes, text="Aluguéis ativos", padding=8)
         panes.add(available_box, weight=1)
         panes.add(active_box, weight=1)
 
@@ -476,11 +512,11 @@ class ReportFrame(BaseFrame):
             show="headings",
         )
         for column, title in (
-            ("plate", "Plate"),
-            ("brand", "Brand"),
-            ("model", "Model"),
-            ("type", "Type"),
-            ("rate", "Daily rate"),
+            ("plate", "Placa"),
+            ("brand", "Marca"),
+            ("model", "Modelo"),
+            ("type", "Tipo"),
+            ("rate", "Diária"),
         ):
             self.available_tree.heading(column, text=title)
             self.available_tree.column(column, width=110)
@@ -493,11 +529,11 @@ class ReportFrame(BaseFrame):
         )
         for column, title in (
             ("id", "ID"),
-            ("customer", "Customer"),
-            ("vehicle", "Vehicle"),
-            ("return", "Expected return"),
+            ("customer", "Cliente"),
+            ("vehicle", "Veículo"),
+            ("return", "Devolução prevista"),
             ("total", "Total"),
-            ("late_fee", "Late fee"),
+            ("late_fee", "Multa"),
         ):
             self.active_tree.heading(column, text=title)
             self.active_tree.column(column, width=110)
@@ -514,7 +550,7 @@ class ReportFrame(BaseFrame):
                     vehicle.plate,
                     vehicle.brand,
                     vehicle.model,
-                    vehicle.vehicle_type.value,
+                    vehicle_type_label(vehicle.vehicle_type),
                     f"{vehicle.daily_rate:.2f}",
                 ),
             )
@@ -536,31 +572,31 @@ class ReportFrame(BaseFrame):
     def export_csv(self) -> None:
         default_path = Path(".data") / "rental_report.csv"
         file_path = filedialog.asksaveasfilename(
-            title="Export report",
+            title="Exportar relatório",
             initialfile=default_path.name,
             defaultextension=".csv",
-            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
+            filetypes=(("Arquivos CSV", "*.csv"), ("Todos os arquivos", "*.*")),
         )
         if not file_path:
             return
         try:
             with open(file_path, "w", newline="", encoding="utf-8") as file:
                 writer = csv.writer(file)
-                writer.writerow(["Available vehicles"])
-                writer.writerow(["plate", "brand", "model", "type", "daily_rate"])
+                writer.writerow(["Veículos disponíveis"])
+                writer.writerow(["placa", "marca", "modelo", "tipo", "valor_diaria"])
                 for vehicle in self.controller.get_vehicles({"status": VehicleStatus.AVAILABLE.value}):
                     writer.writerow(
                         [
                             vehicle.plate,
                             vehicle.brand,
                             vehicle.model,
-                            vehicle.vehicle_type.value,
+                            vehicle_type_label(vehicle.vehicle_type),
                             f"{vehicle.daily_rate:.2f}",
                         ]
                     )
                 writer.writerow([])
-                writer.writerow(["Active rentals"])
-                writer.writerow(["id", "customer", "vehicle", "expected_return", "total", "late_fee"])
+                writer.writerow(["Aluguéis ativos"])
+                writer.writerow(["id", "cliente", "veiculo", "devolucao_prevista", "total", "multa"])
                 for rental in self.controller.get_rentals({"status": RentalStatus.ACTIVE.value}):
                     writer.writerow(
                         [
@@ -572,7 +608,7 @@ class ReportFrame(BaseFrame):
                             f"{self.controller.get_rental_late_fee(rental.rental_id or 0):.2f}",
                         ]
                     )
-            self.show_success(f"Report exported to {file_path}.")
+            self.show_success(f"Relatório exportado para {file_path}.")
         except Exception as error:
             self.show_error(error)
 
@@ -585,36 +621,36 @@ class PublicArea(BaseFrame):
         self.password = tk.StringVar()
         self.pickup_date = tk.StringVar(value=date.today().isoformat())
         self.days = tk.StringVar(value="1")
-        self.status_text = tk.StringVar(value="Not logged in")
+        self.status_text = tk.StringVar(value="Não autenticado")
         self._build()
         self.refresh_public_lists()
 
     def _build(self) -> None:
-        login_box = ttk.LabelFrame(self, text="Customer login", padding=10)
+        login_box = ttk.LabelFrame(self, text="Acesso do cliente", padding=10)
         login_box.pack(fill="x", pady=(0, 8))
-        ttk.Label(login_box, text="Code or CPF").pack(side="left", padx=(0, 6))
+        ttk.Label(login_box, text="Código ou CPF").pack(side="left", padx=(0, 6))
         ttk.Entry(login_box, textvariable=self.code, width=18).pack(side="left", padx=(0, 8))
-        ttk.Label(login_box, text="Password").pack(side="left", padx=(0, 6))
+        ttk.Label(login_box, text="Senha").pack(side="left", padx=(0, 6))
         ttk.Entry(login_box, textvariable=self.password, show="*", width=18).pack(side="left", padx=(0, 8))
-        ttk.Button(login_box, text="Login", command=self.login).pack(side="left", padx=(0, 6))
-        ttk.Button(login_box, text="Logout", command=self.logout).pack(side="left", padx=(0, 12))
+        ttk.Button(login_box, text="Entrar", command=self.login).pack(side="left", padx=(0, 6))
+        ttk.Button(login_box, text="Sair", command=self.logout).pack(side="left", padx=(0, 12))
         ttk.Label(login_box, textvariable=self.status_text).pack(side="left")
 
-        rental_box = ttk.LabelFrame(self, text="Rent a vehicle", padding=10)
+        rental_box = ttk.LabelFrame(self, text="Alugar veículo", padding=10)
         rental_box.pack(fill="x", pady=(0, 8))
-        ttk.Label(rental_box, text="Pickup date").pack(side="left", padx=(0, 6))
+        ttk.Label(rental_box, text="Data de retirada").pack(side="left", padx=(0, 6))
         ttk.Entry(rental_box, textvariable=self.pickup_date, width=14).pack(side="left", padx=(0, 8))
-        ttk.Label(rental_box, text="Days").pack(side="left", padx=(0, 6))
+        ttk.Label(rental_box, text="Dias").pack(side="left", padx=(0, 6))
         ttk.Entry(rental_box, textvariable=self.days, width=8).pack(side="left", padx=(0, 8))
-        ttk.Button(rental_box, text="Rent selected vehicle", command=self.create_customer_rental).pack(
+        ttk.Button(rental_box, text="Alugar veículo selecionado", command=self.create_customer_rental).pack(
             side="left", padx=(0, 6)
         )
-        ttk.Button(rental_box, text="Refresh", command=self.refresh_public_lists).pack(side="left")
+        ttk.Button(rental_box, text="Atualizar", command=self.refresh_public_lists).pack(side="left")
 
         panes = ttk.PanedWindow(self, orient="horizontal")
         panes.pack(fill="both", expand=True)
-        available_box = ttk.LabelFrame(panes, text="Available vehicles", padding=8)
-        rentals_box = ttk.LabelFrame(panes, text="My rentals", padding=8)
+        available_box = ttk.LabelFrame(panes, text="Veículos disponíveis", padding=8)
+        rentals_box = ttk.LabelFrame(panes, text="Meus aluguéis", padding=8)
         panes.add(available_box, weight=1)
         panes.add(rentals_box, weight=1)
 
@@ -624,12 +660,12 @@ class PublicArea(BaseFrame):
             show="headings",
         )
         for column, title in (
-            ("plate", "Plate"),
-            ("brand", "Brand"),
-            ("model", "Model"),
-            ("year", "Year"),
-            ("type", "Type"),
-            ("rate", "Daily rate"),
+            ("plate", "Placa"),
+            ("brand", "Marca"),
+            ("model", "Modelo"),
+            ("year", "Ano"),
+            ("type", "Tipo"),
+            ("rate", "Diária"),
         ):
             self.available_tree.heading(column, text=title)
             self.available_tree.column(column, width=100)
@@ -642,12 +678,12 @@ class PublicArea(BaseFrame):
         )
         for column, title in (
             ("id", "ID"),
-            ("vehicle", "Vehicle"),
-            ("pickup", "Pickup"),
-            ("return", "Expected return"),
-            ("days", "Days"),
+            ("vehicle", "Veículo"),
+            ("pickup", "Retirada"),
+            ("return", "Devolução prevista"),
+            ("days", "Dias"),
             ("total", "Total"),
-            ("status", "Status"),
+            ("status", "Situação"),
         ):
             self.rental_tree.heading(column, text=title)
             self.rental_tree.column(column, width=100)
@@ -658,26 +694,26 @@ class PublicArea(BaseFrame):
             self.customer = self.controller.post_customer_login(
                 {"code": self.code.get(), "password": self.password.get()}
             )
-            self.status_text.set(f"Logged in as {self.customer.name}")
+            self.status_text.set(f"Autenticado como {self.customer.name}")
             self.refresh_public_lists()
         except Exception as error:
             self.customer = None
-            self.status_text.set("Not logged in")
+            self.status_text.set("Não autenticado")
             self.show_error(error)
 
     def logout(self) -> None:
         self.customer = None
         self.password.set("")
-        self.status_text.set("Not logged in")
+        self.status_text.set("Não autenticado")
         self.refresh_public_lists()
 
     def create_customer_rental(self) -> None:
         if self.customer is None:
-            messagebox.showwarning("Login required", "Customer login is required.")
+            messagebox.showwarning("Login obrigatório", "É necessário fazer login como cliente.")
             return
         selected = self.available_tree.selection()
         if not selected:
-            messagebox.showwarning("Selection required", "Select an available vehicle first.")
+            messagebox.showwarning("Seleção obrigatória", "Selecione um veículo disponível primeiro.")
             return
         vehicle_plate = self.available_tree.item(selected[0], "values")[0]
         try:
@@ -689,7 +725,7 @@ class PublicArea(BaseFrame):
                     "days": self.days.get(),
                 }
             )
-            self.show_success(f"Rental {rental.rental_id} created. Total: {rental.total_amount:.2f}")
+            self.show_success(f"Aluguel {rental.rental_id} criado. Total: {rental.total_amount:.2f}")
             self.refresh_public_lists()
         except Exception as error:
             self.show_error(error)
@@ -706,7 +742,7 @@ class PublicArea(BaseFrame):
                     vehicle.brand,
                     vehicle.model,
                     vehicle.year,
-                    vehicle.vehicle_type.value,
+                    vehicle_type_label(vehicle.vehicle_type),
                     f"{vehicle.daily_rate:.2f}",
                 ),
             )
@@ -723,6 +759,6 @@ class PublicArea(BaseFrame):
                     rental.expected_return_date.isoformat(),
                     rental.days,
                     f"{rental.total_amount:.2f}",
-                    rental.status.value,
+                    rental_status_label(rental.status),
                 ),
             )

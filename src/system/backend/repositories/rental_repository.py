@@ -35,7 +35,7 @@ class RentalRepository:
 
     def update(self, rental: Rental) -> None:
         if rental.rental_id is None:
-            raise UnprocessableEntityError("Rental id is required.")
+            raise UnprocessableEntityError("O ID do aluguel é obrigatório.")
 
         with self.database.connect() as connection:
             cursor = connection.execute(
@@ -58,7 +58,7 @@ class RentalRepository:
             )
 
             if cursor.rowcount == 0:
-                raise NotFoundError("Rental was not found.")
+                raise NotFoundError("Aluguel não encontrado.")
 
     def get_by_id(self, rental_id: int) -> Rental | None:
         with self.database.connect() as connection:

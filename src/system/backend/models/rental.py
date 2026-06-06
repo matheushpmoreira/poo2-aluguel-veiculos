@@ -38,16 +38,16 @@ class Rental:
         try:
             self.status = RentalStatus(str(self.status).strip().lower())
         except ValueError as exc:
-            raise UnprocessableEntityError("Rental status must be active or finished.") from exc
+            raise UnprocessableEntityError("O status do aluguel deve ser ativo ou finalizado.") from exc
 
         if not self.customer_code or not self.vehicle_plate:
-            raise UnprocessableEntityError("Rental customer and vehicle are required.")
+            raise UnprocessableEntityError("Cliente e veículo são obrigatórios para o aluguel.")
         if self.days <= 0:
-            raise UnprocessableEntityError("Rental days must be greater than zero.")
+            raise UnprocessableEntityError("A quantidade de dias deve ser maior que zero.")
         if self.total_amount < 0:
-            raise UnprocessableEntityError("Rental total amount cannot be negative.")
+            raise UnprocessableEntityError("O valor total do aluguel não pode ser negativo.")
         if self.expected_return_date < self.pickup_date:
-            raise UnprocessableEntityError("Expected return date cannot be before pickup date.")
+            raise UnprocessableEntityError("A data prevista de devolução não pode ser anterior à retirada.")
 
     @classmethod
     def create(cls, customer: Customer, vehicle: Vehicle, pickup_date: date, days: int) -> "Rental":

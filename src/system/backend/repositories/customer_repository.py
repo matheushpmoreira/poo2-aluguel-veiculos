@@ -31,13 +31,13 @@ class CustomerRepository:
             )
 
             if cursor.rowcount == 0:
-                raise NotFoundError("Customer was not found.")
+                raise NotFoundError("Cliente não encontrado.")
 
     def delete(self, code: str) -> None:
         with self.database.connect() as connection:
             cursor = connection.execute("DELETE FROM customers WHERE code = ?", (code.strip(),))
             if cursor.rowcount == 0:
-                raise NotFoundError("Customer was not found.")
+                raise NotFoundError("Cliente não encontrado.")
 
     def get_by_code(self, code: str) -> Customer | None:
         with self.database.connect() as connection:

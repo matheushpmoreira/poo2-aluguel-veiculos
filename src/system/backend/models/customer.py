@@ -21,7 +21,7 @@ class Customer:
         self.password = self.password.strip()
 
         if not all([self.code, self.name, self.phone, self.email, self.address, self.password]):
-            raise UnprocessableEntityError("All customer fields are required.")
+            raise UnprocessableEntityError("Todos os campos do cliente são obrigatórios.")
 
     def check_password(self, password: str) -> bool:
         return self.password == password

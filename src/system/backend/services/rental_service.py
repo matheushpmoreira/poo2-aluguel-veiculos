@@ -22,14 +22,14 @@ class RentalService:
         customer = self.customer_repository.get_by_code(customer_code)
 
         if customer is None:
-            raise NotFoundError("Rental requires a registered customer.")
+            raise NotFoundError("O aluguel exige um cliente cadastrado.")
 
         vehicle = self.vehicle_repository.get_by_plate(vehicle_plate)
 
         if vehicle is None:
-            raise NotFoundError("Rental requires a registered vehicle.")
+            raise NotFoundError("O aluguel exige um veículo cadastrado.")
         if not vehicle.is_available or self.rental_repository.has_active_rental_for_vehicle(vehicle.plate):
-            raise ConflictError("Vehicle is not available for rental.")
+            raise ConflictError("O veículo não está disponível para aluguel.")
 
         rental = Rental.create(customer, vehicle, pickup_date, days)
 
@@ -41,12 +41,12 @@ class RentalService:
         rental = self.get_rental(rental_id)
 
         if rental.status != ACTIVE:
-            raise ConflictError("Rental is already finished.")
+            raise ConflictError("O aluguel já está finalizado.")
 
         vehicle = self.vehicle_repository.get_by_plate(rental.vehicle_plate)
 
         if vehicle is None:
-            raise NotFoundError("Rental vehicle was not found.")
+            raise NotFoundError("Veículo do aluguel não encontrado.")
 
         rental.set_finished()
         vehicle.set_available()
@@ -59,7 +59,7 @@ class RentalService:
         rental = self.rental_repository.get_by_id(rental_id)
 
         if rental is None:
-            raise NotFoundError("Rental was not found.")
+            raise NotFoundError("Aluguel não encontrado.")
 
         return rental
 
@@ -86,7 +86,7 @@ class RentalService:
         vehicle = self.vehicle_repository.get_by_plate(rental.vehicle_plate)
 
         if vehicle is None:
-            raise NotFoundError("Rental vehicle was not found.")
+            raise NotFoundError("Veículo do aluguel não encontrado.")
 
         overdue_days = (today - rental.expected_return_date).days
         return round(vehicle.daily_rate * 0.2 * overdue_days, 2)

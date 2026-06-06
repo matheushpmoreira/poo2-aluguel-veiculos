@@ -72,12 +72,12 @@ def seed(reset: bool = False, database_path: str | Path | None = None) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Populate the vehicle rental database.")
-    parser.add_argument("--reset", action="store_true", help="Delete the current database before seeding.")
-    parser.add_argument("--database", default=None, help="Custom SQLite database path.")
+    parser = argparse.ArgumentParser(description="Popular o banco de dados do sistema de aluguel de veículos.")
+    parser.add_argument("--reset", action="store_true", help="Apagar o banco atual antes da população.")
+    parser.add_argument("--database", default=None, help="Caminho personalizado para o banco SQLite.")
     args = parser.parse_args()
     seed(reset=args.reset, database_path=args.database)
-    print("Database populated.")
+    print("Banco de dados populado.")
 
 
 if __name__ == "__main__":

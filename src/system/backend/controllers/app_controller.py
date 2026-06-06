@@ -55,9 +55,9 @@ class AppController:
             plate=str(data.get("plate", "")),
             brand=str(data.get("brand", "")),
             model=str(data.get("model", "")),
-            year=self._parse_int(data.get("year"), "year"),
+            year=self._parse_int(data.get("year"), "ano"),
             vehicle_type=self._parse_vehicle_type(data.get("vehicle_type")),
-            daily_rate=self._parse_float(data.get("daily_rate"), "daily rate"),
+            daily_rate=self._parse_float(data.get("daily_rate"), "valor da diária"),
             status=self._parse_vehicle_status(data.get("status", VehicleStatus.AVAILABLE)),
         )
 
@@ -66,9 +66,9 @@ class AppController:
             plate=plate,
             brand=str(data.get("brand", "")),
             model=str(data.get("model", "")),
-            year=self._parse_int(data.get("year"), "year"),
+            year=self._parse_int(data.get("year"), "ano"),
             vehicle_type=self._parse_vehicle_type(data.get("vehicle_type")),
-            daily_rate=self._parse_float(data.get("daily_rate"), "daily rate"),
+            daily_rate=self._parse_float(data.get("daily_rate"), "valor da diária"),
             status=self._parse_vehicle_status(data.get("status")),
         )
 
@@ -123,25 +123,25 @@ class AppController:
         return rentals
 
     def get_rental(self, rental_id: str | int) -> Rental:
-        return self._rental_service.get_rental(self._parse_int(rental_id, "rental id"))
+        return self._rental_service.get_rental(self._parse_int(rental_id, "ID do aluguel"))
 
     def post_rental(self, data: dict[str, Any]) -> Rental:
         return self._rental_service.create_rental(
             customer_code=str(data.get("customer_code", "")),
             vehicle_plate=str(data.get("vehicle_plate", "")),
-            pickup_date=self._parse_date(data.get("pickup_date"), "pickup date"),
-            days=self._parse_int(data.get("days"), "days"),
+            pickup_date=self._parse_date(data.get("pickup_date"), "data de retirada"),
+            days=self._parse_int(data.get("days"), "quantidade de dias"),
         )
 
     def post_rental_finish(self, rental_id: str | int) -> Rental:
-        return self._rental_service.finish_rental(self._parse_int(rental_id, "rental id"))
+        return self._rental_service.finish_rental(self._parse_int(rental_id, "ID do aluguel"))
 
     def get_rental_late_fee(self, rental_id: str | int, reference_date: date | str | None = None) -> float:
         parsed_reference_date = (
-            self._parse_date(reference_date, "reference date") if reference_date is not None else None
+            self._parse_date(reference_date, "data de referência") if reference_date is not None else None
         )
         return self._rental_service.calc_late_fee(
-            rental_id=self._parse_int(rental_id, "rental id"),
+            rental_id=self._parse_int(rental_id, "ID do aluguel"),
             reference_date=parsed_reference_date,
         )
 
@@ -150,14 +150,14 @@ class AppController:
         try:
             return int(value)
         except (TypeError, ValueError) as exc:
-            raise BadRequestError(f"Invalid {field_name}.") from exc
+            raise BadRequestError(f"{field_name.capitalize()} inválido.") from exc
 
     @staticmethod
     def _parse_float(value: Any, field_name: str) -> float:
         try:
             return float(value)
         except (TypeError, ValueError) as exc:
-            raise BadRequestError(f"Invalid {field_name}.") from exc
+            raise BadRequestError(f"{field_name.capitalize()} inválido.") from exc
 
     @staticmethod
     def _parse_date(value: Any, field_name: str) -> date:
@@ -166,25 +166,25 @@ class AppController:
         try:
             return date.fromisoformat(str(value))
         except (TypeError, ValueError) as exc:
-            raise BadRequestError(f"Invalid {field_name}. Use YYYY-MM-DD.") from exc
+            raise BadRequestError(f"{field_name.capitalize()} inválida. Use AAAA-MM-DD.") from exc
 
     @staticmethod
     def _parse_vehicle_status(value: Any) -> VehicleStatus:
         try:
             return VehicleStatus(str(value).strip().lower())
         except (TypeError, ValueError) as exc:
-            raise UnprocessableEntityError("Vehicle status must be available or rented.") from exc
+            raise UnprocessableEntityError("O status do veículo deve ser disponível ou alugado.") from exc
 
     @staticmethod
     def _parse_vehicle_type(value: Any) -> VehicleType:
         try:
             return VehicleType(str(value).strip().lower())
         except (TypeError, ValueError) as exc:
-            raise UnprocessableEntityError("Vehicle type must be car, motorcycle, truck or van.") from exc
+            raise UnprocessableEntityError("O tipo do veículo deve ser carro, moto, caminhão ou van.") from exc
 
     @staticmethod
     def _parse_rental_status(value: Any) -> RentalStatus:
         try:
             return RentalStatus(str(value).strip().lower())
         except (TypeError, ValueError) as exc:
-            raise UnprocessableEntityError("Rental status must be active or finished.") from exc
+            raise UnprocessableEntityError("O status do aluguel deve ser ativo ou finalizado.") from exc
