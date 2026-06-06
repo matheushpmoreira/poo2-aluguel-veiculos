@@ -3,13 +3,10 @@ from system.backend.controllers import AppController
 from system.backend.database import Database
 
 
-def get_controller() -> AppController:
-    database = Database(".vehicle_rental.sqlite3")
-    return AppController(database)
-
-
 def main() -> None:
-    app = RentalSystemApp(get_controller())
+    database = Database(".vehicle_rental.sqlite3")
+    controller = AppController(database)
+    app = RentalSystemApp(controller)
     app.mainloop()
 
 

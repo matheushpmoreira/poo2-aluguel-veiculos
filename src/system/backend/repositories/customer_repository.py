@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from system.backend.database import Database
 from system.backend.errors import NotFoundError

@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from system.backend.models import RentalStatus, VehicleStatus, VehicleType
 
@@ -9,10 +8,12 @@ VEHICLE_TYPE_LABELS = {
     VehicleType.TRUCK: "caminhão",
     VehicleType.VAN: "van",
 }
+
 VEHICLE_STATUS_LABELS = {
     VehicleStatus.AVAILABLE: "disponível",
     VehicleStatus.RENTED: "alugado",
 }
+
 RENTAL_STATUS_LABELS = {
     RentalStatus.ACTIVE: "ativo",
     RentalStatus.FINISHED: "finalizado",

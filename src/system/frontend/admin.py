@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 import csv
 import tkinter as tk
@@ -11,19 +10,14 @@ from system.backend.models import Rental, Vehicle, VehicleStatus
 
 from .base import Action, BaseFrame
 from .choices import ChoiceBox, vehicle_status_choices, vehicle_status_filter_choices, vehicle_type_choices
-from .form import VehicleForm
 from .formatters import (
-    active_rental_filter,
     available_vehicle_choices,
     available_vehicle_filter,
     customer_choices,
     customer_payload,
-    customer_row,
+    customer_admin_row,
     rental_admin_row,
     rental_payload,
-    report_csv_rows,
-    report_rental_row,
-    report_vehicle_row,
     vehicle_admin_payload,
     vehicle_admin_row,
 )
@@ -49,13 +43,6 @@ class AdminPanel(BaseFrame):
         notebook.add(self.customer_frame, text="Clientes")
         notebook.add(self.rental_frame, text="Aluguéis")
         notebook.add(self.report_frame, text="Relatórios")
-
-        # TODO: dá p remover?
-        notebook.bind("<<NotebookTabChanged>>", self._refresh_current_tab)
-
-    def _refresh_current_tab(self, _event: tk.Event) -> None:
-        for frame in (self.vehicle_frame, self.customer_frame, self.rental_frame, self.report_frame):
-            frame.refresh()
 
 
 class VehicleAdminFrame(BaseFrame):
@@ -118,6 +105,7 @@ class VehicleAdminFrame(BaseFrame):
         #     ),
         # )
 
+        # Tabela
         list_area = ttk.Frame(container)
         list_area.pack(side="left", fill="both", expand=True)
         filters = ttk.Frame(list_area)
@@ -240,6 +228,7 @@ class CustomerAdminFrame(BaseFrame):
             ttk.Entry(form, textvariable=self.fields[key]).grid(row=row, column=1, sticky="ew", pady=3)
         form.columnconfigure(1, weight=1)
 
+        # Botões
         buttons = ttk.Frame(form)
         buttons.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(10, 0))
         actions = (
@@ -261,6 +250,7 @@ class CustomerAdminFrame(BaseFrame):
         #     ),
         # )
 
+        # Tabela
         self.table = DataTable(
             container,
             (
@@ -271,7 +261,7 @@ class CustomerAdminFrame(BaseFrame):
                 Column("address", "Endereço", 220),
                 Column("password", "Senha", 100),
             ),
-            customer_row,
+            customer_admin_row,
         )
         self.table.pack(side="left", fill="both", expand=True)
         self.table.bind("<<TreeviewSelect>>", self.fill_from_selection)
@@ -414,79 +404,3 @@ class RentalAdminFrame(BaseFrame):
 class ReportFrame(BaseFrame):
     def refresh(self) -> None:
         pass
-#     def __init__(self, parent: tk.Widget, controller: AppController) -> None:
-#         super().__init__(parent, controller)
-#         self.available_table: DataTable[Vehicle]
-#         self.active_table: DataTable[tuple[Rental, float]]
-#         self._build()
-#         self.refresh()
-#
-#     def _build(self) -> None:
-#         toolbar = ttk.Frame(self)
-#         toolbar.pack(fill="x", pady=(0, 8))
-#         ttk.Button(toolbar, text="Atualizar", command=self.refresh).pack(side="left", padx=(0, 6))
-#         ttk.Button(toolbar, text="Exportar CSV", command=self.export_csv).pack(side="left")
-#
-#         panes = ttk.PanedWindow(self, orient="horizontal")
-#         panes.pack(fill="both", expand=True)
-#
-#         available_box = ttk.LabelFrame(panes, text="Veículos disponíveis", padding=8)
-#         active_box = ttk.LabelFrame(panes, text="Aluguéis ativos", padding=8)
-#         panes.add(available_box, weight=1)
-#         panes.add(active_box, weight=1)
-#
-#         self.available_table = DataTable(
-#             available_box,
-#             (
-#                 Column("plate", "Placa", 110),
-#                 Column("brand", "Marca", 110),
-#                 Column("model", "Modelo", 110),
-#                 Column("type", "Tipo", 110),
-#                 Column("rate", "Diária", 110),
-#             ),
-#             report_vehicle_row,
-#         )
-#         self.available_table.pack(fill="both", expand=True)
-#
-#         self.active_table = DataTable(
-#             active_box,
-#             (
-#                 Column("id", "ID", 110),
-#                 Column("customer", "Cliente", 110),
-#                 Column("vehicle", "Veículo", 110),
-#                 Column("return", "Devolução prevista", 110),
-#                 Column("total", "Total", 110),
-#                 Column("late_fee", "Multa", 110),
-#             ),
-#             report_rental_row,
-#         )
-#         self.active_table.pack(fill="both", expand=True)
-#
-#     def refresh(self) -> None:
-#         self.available_table.set_items(self.controller.get_vehicles(available_vehicle_filter()))
-#         self.active_table.set_items(self._active_rentals_with_fees())
-#
-#     def export_csv(self) -> None:
-#         default_path = Path(".data") / "rental_report.csv"
-#         file_path = filedialog.asksaveasfilename(
-#             title="Exportar relatório",
-#             initialfile=default_path.name,
-#             defaultextension=".csv",
-#             filetypes=(("Arquivos CSV", "*.csv"), ("Todos os arquivos", "*.*")),
-#         )
-#         if not file_path:
-#             return
-#         try:
-#             vehicles = self.controller.get_vehicles(available_vehicle_filter())
-#             active_rentals = self._active_rentals_with_fees()
-#             with open(file_path, "w", newline="", encoding="utf-8") as file:
-#                 csv.writer(file).writerows(report_csv_rows(vehicles, active_rentals))
-#             self.show_success(f"Relatório exportado para {file_path}.")
-#         except Exception as error:
-#             self.show_error(error)
-#
-#     def _active_rentals_with_fees(self) -> tuple[tuple[Rental, float], ...]:
-#         return tuple(
-#             (rental, self.controller.get_rental_late_fee(rental.rental_id or 0))
-#             for rental in self.controller.get_rentals(active_rental_filter())
-#         )
