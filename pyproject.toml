@@ -15,7 +15,11 @@ dependencies = []
 
 [project.scripts]
 vehicle-rental = "system.main:main"
-seed-vehicle-rental = "scripts.seed_database:main"
+seed-vehicle-rental = "seed_database:main"
+
+[tool.setuptools]
+py-modules = ["seed_database"]
+package-dir = { "" = "scripts", "system" = "src/system" }
 
 [tool.setuptools.packages.find]
 where = ["src"]

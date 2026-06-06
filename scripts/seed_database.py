@@ -1,11 +1,27 @@
 from __future__ import annotations
 
-from system.backend.errors import BackendError
-from system.main import get_controller
+from pathlib import Path
+
+from system.backend.controllers import AppController
+from system.backend.database import Database
+
+
+DATABASE_PATH = Path(".vehicle_rental.sqlite3")
+
+
+def delete_database() -> None:
+    for path in (
+        DATABASE_PATH,
+        DATABASE_PATH.with_name(f"{DATABASE_PATH.name}-wal"),
+        DATABASE_PATH.with_name(f"{DATABASE_PATH.name}-shm"),
+        DATABASE_PATH.with_name(f"{DATABASE_PATH.name}-journal"),
+    ):
+        path.unlink(missing_ok=True)
 
 
 def main() -> None:
-    controller = get_controller()
+    delete_database()
+    controller = AppController(Database(DATABASE_PATH))
     vehicles = [
         ("ABC1D23", "Toyota", "Corolla", 2022, "car", 180.0),
         ("MOT9A87", "Honda", "CB 500F", 2021, "motorcycle", 95.0),
@@ -18,46 +34,37 @@ def main() -> None:
     ]
 
     for plate, brand, model, year, vehicle_type, rate in vehicles:
-        try:
-            controller.post_vehicle(
-                {
-                    "plate": plate,
-                    "brand": brand,
-                    "model": model,
-                    "year": year,
-                    "vehicle_type": vehicle_type,
-                    "daily_rate": rate,
-                }
-            )
-        except BackendError:
-            pass
-
-    for code, name, phone, email, address, password in customers:
-        try:
-            controller.post_customer(
-                {
-                    "code": code,
-                    "name": name,
-                    "phone": phone,
-                    "email": email,
-                    "address": address,
-                    "password": password,
-                }
-            )
-        except BackendError:
-            pass
-
-    try:
-        controller.post_rental(
+        controller.post_vehicle(
             {
-                "customer_code": "11122233344",
-                "vehicle_plate": "ABC1D23",
-                "pickup_date": "2026-05-31",
-                "days": 3,
+                "plate": plate,
+                "brand": brand,
+                "model": model,
+                "year": year,
+                "vehicle_type": vehicle_type,
+                "daily_rate": rate,
             }
         )
-    except BackendError:
-        pass
+
+    for code, name, phone, email, address, password in customers:
+        controller.post_customer(
+            {
+                "code": code,
+                "name": name,
+                "phone": phone,
+                "email": email,
+                "address": address,
+                "password": password,
+            }
+        )
+
+    controller.post_rental(
+        {
+            "customer_code": "11122233344",
+            "vehicle_plate": "ABC1D23",
+            "pickup_date": "2026-05-31",
+            "days": 3,
+        }
+    )
 
 
 if __name__ == "__main__":
