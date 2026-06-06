@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 class Database:
-    def __init__(self, database_path: str | Path = ".vehicle_rental.sqlite3") -> None:
+    def __init__(self, database_path: str | Path) -> None:
         self.database_path = Path(database_path)
         self.initialize()
 

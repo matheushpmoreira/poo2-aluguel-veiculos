@@ -12,17 +12,17 @@ from system.backend.services import CustomerService, RentalService, VehicleServi
 
 
 class AppController:
-    def __init__(self, database_path: str | Path | None = None) -> None:
-        self.database = Database(database_path) if database_path else Database()
-        self.vehicle_repository = VehicleRepository(self.database)
-        self.customer_repository = CustomerRepository(self.database)
-        self.rental_repository = RentalRepository(self.database)
-        self._vehicle_service = VehicleService(self.vehicle_repository)
-        self._customer_service = CustomerService(self.customer_repository)
+    def __init__(self, database: Database) -> None:
+        vehicle_repository = VehicleRepository(database)
+        customer_repository = CustomerRepository(database)
+        rental_repository = RentalRepository(database)
+
+        self._vehicle_service = VehicleService(vehicle_repository)
+        self._customer_service = CustomerService(customer_repository)
         self._rental_service = RentalService(
-            rental_repository=self.rental_repository,
-            customer_repository=self.customer_repository,
-            vehicle_repository=self.vehicle_repository,
+            rental_repository=rental_repository,
+            customer_repository=customer_repository,
+            vehicle_repository=vehicle_repository,
         )
 
     def get_vehicles(self, query: dict[str, str] | None = None) -> list[Vehicle]:

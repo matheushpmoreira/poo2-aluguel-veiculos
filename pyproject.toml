@@ -19,7 +19,6 @@ seed-vehicle-rental = "scripts.seed_database:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["scripts*"]
 
 [tool.unittest]
 start-directory = "tests"
