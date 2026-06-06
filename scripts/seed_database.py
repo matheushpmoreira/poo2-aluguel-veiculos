@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from system.backend.controllers import AppController
-from system.backend.database import Database
+from matheushpmoreira.vehicle_rental_system.backend.controllers import AppController
+from matheushpmoreira.vehicle_rental_system.backend.database import Database
 
 
 def main() -> None:

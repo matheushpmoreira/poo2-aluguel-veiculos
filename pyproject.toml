@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.11.14,<0.12"]
+build-backend = "uv_build"
 
 [project]
 name = "vehicle-rental-system"
@@ -14,19 +14,10 @@ authors = [
 dependencies = []
 
 [project.scripts]
-vehicle-rental = "system.main:main"
-seed-vehicle-rental = "seed_database:main"
+vhs = "vehicle_rental_system.main:main"
 
-[tool.setuptools]
-py-modules = ["seed_database"]
-package-dir = { "" = "scripts", "system" = "src/system" }
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.unittest]
-start-directory = "tests"
-pattern = "test_*.py"
+[tool.uv.build-backend]
+module-name = "matheushpmoreira.vehicle_rental_system"
 
 [tool.ruff]
 line-length = 120
