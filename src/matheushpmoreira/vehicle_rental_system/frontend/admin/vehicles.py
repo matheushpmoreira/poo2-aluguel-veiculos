@@ -2,12 +2,12 @@ import tkinter as tk
 from tkinter import ttk
 
 from matheushpmoreira.vehicle_rental_system.backend.controllers import AppController
-from matheushpmoreira.vehicle_rental_system.backend.models import Vehicle
+from matheushpmoreira.vehicle_rental_system.backend.models import Vehicle, VehicleStatus
 from matheushpmoreira.vehicle_rental_system.frontend.admin.forms import VehicleForm
 from matheushpmoreira.vehicle_rental_system.frontend.base import BaseFrame
-from matheushpmoreira.vehicle_rental_system.frontend.choices import vehicle_status_filter_choices
-from matheushpmoreira.vehicle_rental_system.frontend.form import ChoiceFieldSpec, SelectInput
+from matheushpmoreira.vehicle_rental_system.frontend.form import ChoiceFieldSpec, Choice, SelectInput
 from matheushpmoreira.vehicle_rental_system.frontend.formatters import vehicle_admin_row
+from matheushpmoreira.vehicle_rental_system.frontend.labels import vehicle_status_label
 from matheushpmoreira.vehicle_rental_system.frontend.tables import Column, DataTable
 
 
@@ -46,7 +46,13 @@ class VehicleAdminFrame(BaseFrame):
         filters.pack(fill="x", pady=(0, 8))
         ttk.Entry(filters, textvariable=self.search_text).pack(side="left", fill="x", expand=True, padx=(0, 6))
         self.status_filter = SelectInput(
-            filters, ChoiceFieldSpec("status", "Situação", vehicle_status_filter_choices(), width=14)
+            filters,
+            ChoiceFieldSpec(
+                "status",
+                "Situação",
+                (Choice("", ""), *(Choice(status.value, vehicle_status_label(status)) for status in VehicleStatus)),
+                width=14,
+            ),
         )
         self.status_filter.pack(side="left", padx=(0, 6))
         ttk.Button(filters, text="Buscar", command=self.refresh).pack(side="left")

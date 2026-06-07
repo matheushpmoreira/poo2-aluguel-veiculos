@@ -1,49 +1,60 @@
 import tkinter as tk
 from datetime import date
 
-from matheushpmoreira.vehicle_rental_system.backend.models import Customer, Vehicle
-from matheushpmoreira.vehicle_rental_system.frontend.choices import (
-    vehicle_status_choices,
-    vehicle_type_choices,
-)
-from matheushpmoreira.vehicle_rental_system.frontend.form import ChoiceFieldSpec, FormFrame, TextFieldSpec
+from matheushpmoreira.vehicle_rental_system.backend.models import Customer, Vehicle, VehicleStatus, VehicleType
+from matheushpmoreira.vehicle_rental_system.frontend.form import ChoiceFieldSpec, FormFrame, Choice, TextFieldSpec, \
+    TextInput, SelectInput
 from matheushpmoreira.vehicle_rental_system.frontend.formatters import (
-    available_vehicle_choices,
-    customer_choices,
+    money,
     customer_payload,
     rental_payload,
     vehicle_admin_payload,
 )
+from matheushpmoreira.vehicle_rental_system.frontend.labels import vehicle_status_label, vehicle_type_label
 
 
 class VehicleForm(FormFrame):
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(
             parent,
-            "Cadastro de veículo",
-            (
-                TextFieldSpec("plate", "Placa"),
-                TextFieldSpec("brand", "Marca"),
-                TextFieldSpec("model", "Modelo"),
-                TextFieldSpec("year", "Ano"),
-                ChoiceFieldSpec("vehicle_type", "Tipo", vehicle_type_choices()),
-                TextFieldSpec("daily_rate", "Valor da diária"),
-                ChoiceFieldSpec("status", "Situação", vehicle_status_choices()),
-            ),
+            title="Cadastro de veículo",
+            inputs={
+                "plate": TextInput(self, label="Placa"),
+                "brand": TextInput(self, label="Marca"),
+                "model": TextInput(self, label="Modelo"),
+                "year": TextInput(self, label="Ano"),
+                "vehicle_type": SelectInput(
+                    self,
+                    label="Tipo",
+                    choices=tuple(Choice(vehicle_type.value, vehicle_type_label(vehicle_type)) for vehicle_type in VehicleType)
+                ),
+                "daily_rate": TextInput(self, label="Valor da diária"),
+                "status": SelectInput(
+                    self,
+                    label="Situação",
+                    choices=tuple(Choice(status.value, vehicle_status_label(status)) for status in VehicleStatus)
+                ),
+            },
+            buttons=(
+                ttk.Button(buttons, text=label, command=command).pack(fill="x", pady=2),
+                ttk.Button(buttons, text=label, command=command).pack(fill="x", pady=2),
+                ttk.Button(buttons, text=label, command=command).pack(fill="x", pady=2),
+                ttk.Button(buttons, text=label, command=command).pack(fill="x", pady=2),
+            )
         )
 
     def plate(self) -> str:
-        return self.text_value("plate")
+        return self.input_value("plate")
 
     def payload(self) -> dict[str, str]:
         return vehicle_admin_payload(
-            self.text_values(),
-            self.require_choice("vehicle_type"),
-            self.require_choice("status"),
+            self.get_values(),
+            self.input_value("vehicle_type"),
+            self.input_value("status"),
         )
 
     def set_vehicle(self, vehicle: Vehicle) -> None:
-        self.set_text_values(
+        self.set_values(
             {
                 "plate": vehicle.plate,
                 "brand": vehicle.brand,
@@ -52,8 +63,8 @@ class VehicleForm(FormFrame):
                 "daily_rate": f"{vehicle.daily_rate:.2f}",
             }
         )
-        self.select_choice("vehicle_type", vehicle.vehicle_type.value)
-        self.select_choice("status", vehicle.status.value)
+        self.set_input_value("vehicle_type", vehicle.vehicle_type.value)
+        self.set_input_value("status", vehicle.status.value)
 
 
 class CustomerForm(FormFrame):
@@ -72,13 +83,13 @@ class CustomerForm(FormFrame):
         )
 
     def code(self) -> str:
-        return self.text_value("code")
+        return self.input_value("code")
 
     def payload(self) -> dict[str, str]:
-        return customer_payload(self.text_values())
+        return customer_payload(self.get_values())
 
     def set_customer(self, customer: Customer) -> None:
-        self.set_text_values(
+        self.set_values(
             {
                 "code": customer.code,
                 "name": customer.name,
@@ -104,15 +115,24 @@ class RentalForm(FormFrame):
         )
 
     def set_customers(self, customers: list[Customer]) -> None:
-        self.set_choice_options("customer_code", customer_choices(customers))
+        self.set_choice_options(
+            "customer_code",
+            tuple(Choice(customer.code, f"{customer.code} - {customer.name}") for customer in customers),
+        )
 
     def set_available_vehicles(self, vehicles: list[Vehicle]) -> None:
-        self.set_choice_options("vehicle_plate", available_vehicle_choices(vehicles))
+        self.set_choice_options(
+            "vehicle_plate",
+            tuple(
+                Choice(vehicle.plate, f"{vehicle.plate} - {vehicle.brand} {vehicle.model} ({money(vehicle.daily_rate)})")
+                for vehicle in vehicles
+            ),
+        )
 
     def payload(self) -> dict[str, str]:
         return rental_payload(
-            self.require_choice("customer_code"),
-            self.require_choice("vehicle_plate"),
-            self.text_value("pickup_date"),
-            self.text_value("days"),
+            self.input_value("customer_code"),
+            self.input_value("vehicle_plate"),
+            self.input_value("pickup_date"),
+            self.input_value("days"),
         )

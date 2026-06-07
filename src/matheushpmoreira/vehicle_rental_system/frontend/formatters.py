@@ -1,9 +1,6 @@
 
-from typing import Iterable
-
 from matheushpmoreira.vehicle_rental_system.backend.models import Customer, Rental, Vehicle, VehicleStatus
 
-from matheushpmoreira.vehicle_rental_system.frontend.choices import Option
 from matheushpmoreira.vehicle_rental_system.frontend.labels import rental_status_label, vehicle_status_label, vehicle_type_label
 
 
@@ -85,17 +82,6 @@ def public_rental_row(rental: Rental) -> tuple[object, ...]:
         rental.days,
         money(rental.total_amount),
         rental_status_label(rental.status),
-    )
-
-
-def customer_choices(customers: Iterable[Customer]) -> tuple[Option, ...]:
-    return tuple(Option(customer.code, f"{customer.code} - {customer.name}") for customer in customers)
-
-
-def available_vehicle_choices(vehicles: Iterable[Vehicle]) -> tuple[Option, ...]:
-    return tuple(
-        Option(vehicle.plate, f"{vehicle.plate} - {vehicle.brand} {vehicle.model} ({money(vehicle.daily_rate)})")
-        for vehicle in vehicles
     )
 
 

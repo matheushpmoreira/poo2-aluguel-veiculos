@@ -4,7 +4,7 @@ from tkinter import ttk
 from matheushpmoreira.vehicle_rental_system.backend.controllers import AppController
 from matheushpmoreira.vehicle_rental_system.frontend.admin.customers import CustomerAdminFrame
 from matheushpmoreira.vehicle_rental_system.frontend.admin.rentals import RentalAdminFrame
-from matheushpmoreira.vehicle_rental_system.frontend.admin.vehicles import VehicleAdminFrame
+# from matheushpmoreira.vehicle_rental_system.frontend.admin.vehicles import VehicleAdminFrame
 from matheushpmoreira.vehicle_rental_system.frontend.base import BaseFrame
 
 
@@ -17,7 +17,7 @@ class AdminPanel(BaseFrame):
 
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True)
-        notebook.add(VehicleAdminFrame(notebook, controller), text="Veículos")
+        # notebook.add(VehicleAdminFrame(notebook, controller), text="Veículos")
         notebook.add(CustomerAdminFrame(notebook, controller), text="Clientes")
         notebook.add(RentalAdminFrame(notebook, controller), text="Aluguéis")
         notebook.add(ReportFrame(notebook, controller), text="Relatórios")
