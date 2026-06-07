@@ -1,96 +1,161 @@
 import tkinter as tk
-from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from tkinter import ttk
+from typing import Callable, Iterable
 
-from matheushpmoreira.vehicle_rental_system.backend.controllers import AppController
-from matheushpmoreira.vehicle_rental_system.frontend.lang import lang
-
-
-class Input(ABC):
-    @abstractmethod
-    def get_value(self) -> str: ...
-
-    @abstractmethod
-    def set_value(self, value: str) -> None: ...
-
-    @abstractmethod
-    def grid(self, row: int) -> None: ...
+from matheushpmoreira.vehicle_rental_system.frontend.choices import Option
 
 
-class Field(Input):
-    def __init__(self, master: tk.Widget, label: str) -> None:
-        self.label = ttk.Label(master, text=label)
-        self.entry = ttk.Entry(master, textvariable=tk.StringVar())
+@dataclass(frozen=True)
+class TextFieldSpec:
+    key: str
+    label: str
+    default: str = ""
+    width: int | None = None
+    show: str = ""
 
-    def get_value(self) -> str:
-        return self.entry.get()
 
-    def set_value(self, value: str) -> None:
-        self.entry.delete(0, tk.END)
-        self.entry.insert(0, value)
+@dataclass(frozen=True)
+class ChoiceFieldSpec:
+    key: str
+    label: str
+    choices: Iterable[Option]
+    width: int | None = None
+
+
+class TextInput:
+    def __init__(self, parent: tk.Widget, spec: TextFieldSpec) -> None:
+        self.key = spec.key
+        self.label = ttk.Label(parent, text=spec.label)
+        self.variable = tk.StringVar(value=spec.default)
+        entry_options: dict[str, object] = {"textvariable": self.variable}
+        if spec.width is not None:
+            entry_options["width"] = spec.width
+        if spec.show:
+            entry_options["show"] = spec.show
+        self.entry = ttk.Entry(parent, **entry_options)
 
     def grid(self, row: int) -> None:
         self.label.grid(row=row, column=0, sticky="w", pady=3, padx=(0, 10))
-        self.entry.grid(row=row, column=1, sticky="we", pady=3)
-
-
-class Choice(Input):
-    def __init__(self, master: tk.Widget, label: str, values: dict[str, str]) -> None:
-        self.label = ttk.Label(master, text=label)
-        self.combobox = ttk.Combobox(
-            master, textvariable=tk.StringVar(), state="readonly", values=tuple(values.values())
-        )
-        self.values = values
-        self.key = ""
+        self.entry.grid(row=row, column=1, sticky="ew", pady=3)
 
     def get_value(self) -> str:
-        return self.key
+        return self.variable.get()
 
-    def set_value(self, key: str) -> None:
-        self.combobox.set(self.values.get(key, ""))
-        self.key = key
-        # print(self.values, key)
+    def set_value(self, value: object) -> None:
+        self.variable.set(str(value))
+
+    def clear(self) -> None:
+        self.variable.set("")
+
+
+class SelectInput:
+    def __init__(self, parent: tk.Widget, spec: ChoiceFieldSpec) -> None:
+        self.key = spec.key
+        self.label = ttk.Label(parent, text=spec.label)
+        self.variable = tk.StringVar()
+        combobox_options: dict[str, object] = {"textvariable": self.variable, "state": "readonly"}
+        if spec.width is not None:
+            combobox_options["width"] = spec.width
+        self.combobox = ttk.Combobox(parent, **combobox_options)
+        self.options: tuple[Option, ...] = ()
+        self.set_options(spec.choices)
 
     def grid(self, row: int) -> None:
         self.label.grid(row=row, column=0, sticky="w", pady=3, padx=(0, 10))
         self.combobox.grid(row=row, column=1, sticky="ew", pady=3)
 
+    def pack(self, **kwargs: object) -> None:
+        self.combobox.pack(**kwargs)
 
-class Form(ABC, ttk.LabelFrame):
-    inputs: dict[str, Input]
+    def get_value(self) -> str:
+        index = self.combobox.current()
+        if 0 <= index < len(self.options):
+            return self.options[index].value
+        return ""
 
-    def pack(self, *args, **kwargs) -> None:
-        super().pack(*args, **kwargs)
-        for idx, input in enumerate(self.inputs.values()):
-            input.grid(idx)
+    def require_value(self) -> str:
+        value = self.get_value()
+        if not value:
+            raise ValueError("Nenhuma opção foi selecionada.")
+        return value
+
+    def set_options(self, options: Iterable[Option]) -> None:
+        current_value = self.get_value()
+        self.options = tuple(options)
+        self.combobox["values"] = tuple(option.label for option in self.options)
+        if current_value and self.set_value(current_value):
+            return
+        self.clear()
+
+    def set_value(self, value: str) -> bool:
+        for index, option in enumerate(self.options):
+            if option.value == value:
+                self.combobox.current(index)
+                return True
+        return False
+
+    def clear(self) -> None:
+        if self.options:
+            self.combobox.current(0)
+        else:
+            self.variable.set("")
 
 
-class VehicleForm(Form):
-    def __init__(self, parent: tk.Widget, controller: AppController, com) -> None:
-        super().__init__(parent, text="Cadastro de veículos", padding=10)
+FieldSpec = TextFieldSpec | ChoiceFieldSpec
 
-        self.inputs = {
-            "plate": Field(self, lang["vehicle"]["attr"]["plate"]),
-            "brand": Field(self, lang["vehicle"]["attr"]["brand"]),
-            "model": Field(self, lang["vehicle"]["attr"]["model"]),
-            "year": Field(self, lang["vehicle"]["attr"]["year"]),
-            "type": Choice(self, lang["vehicle"]["attr"]["type"], lang["vehicle"]["type"].copy()),
-            "daily_rate": Field(self, lang["vehicle"]["attr"]["daily_rate"]),
-            "status": Choice(self, lang["vehicle"]["attr"]["status"], lang["vehicle"]["status"].copy()),
-        }
 
-        self.actions = (
-            ttk.Button(parent, text="Cadastrar", command=com),
-            # ttk.Button(parent, text="Atualizar", command=self.command),
-            # ttk.Button(parent, text="Remover", command=self.command),
-            # ttk.Button(parent, text="Limpar", command=self.command),
-        )
+class FormFrame(ttk.LabelFrame):
+    def __init__(self, parent: tk.Widget, title: str, fields: Iterable[FieldSpec]) -> None:
+        super().__init__(parent, text=title, padding=10)
+        self._text_inputs: dict[str, TextInput] = {}
+        self._choice_inputs: dict[str, SelectInput] = {}
+        self._next_row = 0
 
-    def get_values(self) -> dict[str, str]:
-        return {key: var.get_value() for key, var in self.inputs.items()}
+        for field in fields:
+            if isinstance(field, TextFieldSpec):
+                input_widget = TextInput(self, field)
+                self._text_inputs[field.key] = input_widget
+            else:
+                input_widget = SelectInput(self, field)
+                self._choice_inputs[field.key] = input_widget
+            input_widget.grid(self._next_row)
+            self._next_row += 1
 
-    def set_values(self, values: dict[str, str]) -> None:
-        for key, val in values.items():
-            if key not in self.inputs:
-                continue
-            self.inputs[key].set_value(val)
+        self.columnconfigure(1, weight=1)
+
+    def add_action_buttons(self, actions: Iterable[tuple[str, Callable[[], None]]]) -> None:
+        buttons = ttk.Frame(self)
+        buttons.grid(row=self._next_row, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        for label, command in actions:
+            ttk.Button(buttons, text=label, command=command).pack(fill="x", pady=2)
+        self._next_row += 1
+
+    def text_value(self, key: str) -> str:
+        return self._text_inputs[key].get_value()
+
+    def text_values(self) -> dict[str, str]:
+        return {key: field.get_value() for key, field in self._text_inputs.items()}
+
+    def set_text_values(self, values: dict[str, object]) -> None:
+        for key, value in values.items():
+            if key in self._text_inputs:
+                self._text_inputs[key].set_value(value)
+
+    def choice_value(self, key: str) -> str:
+        return self._choice_inputs[key].get_value()
+
+    def require_choice(self, key: str) -> str:
+        return self._choice_inputs[key].require_value()
+
+    def set_choice_options(self, key: str, options: Iterable[Option]) -> None:
+        self._choice_inputs[key].set_options(options)
+
+    def select_choice(self, key: str, value: str) -> bool:
+        return self._choice_inputs[key].set_value(value)
+
+    def clear(self) -> None:
+        for field in self._text_inputs.values():
+            field.clear()
+        for field in self._choice_inputs.values():
+            field.clear()
