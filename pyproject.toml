@@ -14,7 +14,7 @@ authors = [
 dependencies = []
 
 [project.scripts]
-vhs = "vehicle_rental_system.main:main"
+vhs = "matheushpmoreira.vehicle_rental_system.main:main"
 
 [tool.uv.build-backend]
 module-name = "matheushpmoreira.vehicle_rental_system"

@@ -1,6 +1,9 @@
 
-from matheushpmoreira.vehicle_rental_system.backend.models import Customer, Rental, Vehicle, VehicleStatus
+from typing import Iterable
 
+from matheushpmoreira.vehicle_rental_system.backend.models import Customer, Rental, Vehicle, VehicleStatus, VehicleType
+
+from matheushpmoreira.vehicle_rental_system.frontend.choices import Choice
 from matheushpmoreira.vehicle_rental_system.frontend.labels import rental_status_label, vehicle_status_label, vehicle_type_label
 
 
@@ -8,16 +11,24 @@ def money(value: float) -> str:
     return f"{value:.2f}"
 
 
-def vehicle_admin_payload(fields: dict[str, str], vehicle_type: str, status: str) -> dict[str, str]:
+def vehicle_admin_payload(
+    fields: dict[str, str], vehicle_type: VehicleType | str, status: VehicleStatus | str
+) -> dict[str, str]:
     return {
         "plate": fields["plate"],
         "brand": fields["brand"],
         "model": fields["model"],
         "year": fields["year"],
-        "vehicle_type": vehicle_type,
+        "vehicle_type": _value(vehicle_type),
         "daily_rate": fields["daily_rate"],
-        "status": status,
+        "status": _value(status),
     }
+
+
+def _value(value: VehicleType | VehicleStatus | str) -> str:
+    if isinstance(value, VehicleType | VehicleStatus):
+        return value.value
+    return value
 
 
 def customer_payload(fields: dict[str, str]) -> dict[str, str]:
@@ -82,6 +93,17 @@ def public_rental_row(rental: Rental) -> tuple[object, ...]:
         rental.days,
         money(rental.total_amount),
         rental_status_label(rental.status),
+    )
+
+
+def customer_choices(customers: Iterable[Customer]) -> tuple[Choice[str], ...]:
+    return tuple(Choice(customer.code, f"{customer.code} - {customer.name}") for customer in customers)
+
+
+def available_vehicle_choices(vehicles: Iterable[Vehicle]) -> tuple[Choice[str], ...]:
+    return tuple(
+        Choice(vehicle.plate, f"{vehicle.plate} - {vehicle.brand} {vehicle.model} ({money(vehicle.daily_rate)})")
+        for vehicle in vehicles
     )
 
 
