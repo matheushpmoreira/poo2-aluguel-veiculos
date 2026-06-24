@@ -3,21 +3,21 @@ requires = ["uv_build>=0.11.14,<0.12"]
 build-backend = "uv_build"
 
 [project]
-name = "vehicle-rental-system"
+name = "poo2-clinica-veterinaria"
 version = "0.1.0"
-description = "Sistema de aluguel de veículos com interface gráfica em tkinter."
+description = "Sistema para gerenciamento de uma clínica veterinária."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 authors = [
     { name = "Matheus Henrique", email = "matheus.hpm@grad.ufsc.br" }
 ]
 dependencies = []
 
-[project.scripts]
-vhs = "matheushpmoreira.vehicle_rental_system.main:main"
-
-[tool.uv.build-backend]
-module-name = "matheushpmoreira.vehicle_rental_system"
+#[project.scripts]
+#vhs = "matheushpmoreira.clivet.main:main"
+#
+#[tool.uv.build-backend]
+#module-name = "matheushpmoreira.clivet"
 
 [tool.ruff]
 line-length = 120
