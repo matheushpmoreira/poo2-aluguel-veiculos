@@ -98,9 +98,7 @@ class BookingService:
         self.animal_repository = animal_repository
         self.service_repository = service_repository
 
-    def create(
-        self, code: str, animal_code: str, service_codes: list[str], start_at: datetime, observations: str
-    ) -> Booking:
+    def create(self, code: str, animal_code: str, service_codes: list[str], start_at: datetime, observations: str) -> Booking:
         animal = self._require_animal(animal_code)
         services = self._require_services(service_codes)
         booking = Booking.create(
