@@ -1,104 +1,73 @@
 # Relatório do Projeto
 
-Este projeto implementa um sistema para gerenciamento de aluguel de veículos, usando Python, Tkinter e SQLite.
+Este projeto implementa um sistema desktop para gerenciamento de uma clínica veterinária, usando Python, Tkinter e SQLite.
 
-A aplicação foi organizada em dois módulos principais: `backend`, responsável pelas regras de negócio e persistência, e `frontend`, responsável pela interface gráfica. O módulo `backend` possui arquitetura similar à arquitetura em camadas, utilizada no desenvolvimento de backends para a web.
+A aplicação usa uma organização em camadas: modelos de domínio, repositórios de persistência, serviços com regras de negócio, controller de fachada e views em Tkinter. Os nomes internos ficam em inglês, enquanto a interface gráfica apresenta textos em português brasileiro.
 
-O sistema permite cadastrar, listar, atualizar e remover veículos e clientes, criar e finalizar aluguéis, realizar login de cliente no painel público e consultar veículos disponíveis para aluguel.
-
-## Classes
+## Classes principais
 
 ### Modelos
 
-- `Vehicle`: representa um veículo cadastrado, com placa, marca, modelo, ano, tipo, valor da diária e status.
-- `Customer`: representa um cliente, com código ou CPF, nome, telefone, e-mail, endereço e senha.
-- `Rental`: representa um aluguel, com cliente, veículo, datas, quantidade de dias, valor total e status.
-- `VehicleStatus`, `VehicleType` e `RentalStatus`: enums de *string* que representam o estado de um veículo (disponível ou alugado), o tipo de veículo (carro, moto, etc.) e o estado de um aluguel (ativo ou concluído).
+- `Tutor`: representa o responsável pelo animal, com CPF, nome, telefone, e-mail e endereço.
+- `Animal`: classe base para animais, com código, nome, espécie, raça, nascimento, peso, tutor e status.
+- `Dog`, `Cat` e `Bird`: especializações de `Animal` com campos próprios.
+- `Service`: classe base para serviços da clínica, com código, nome, tipo, descrição, valor base e duração.
+- `Consultation`, `BathGrooming`, `Vaccination` e `Housing`: especializações de `Service` com campos próprios. Exames e cirurgias usam a classe base `Service`.
+- `Booking`: representa um agendamento com animal, serviços, início, término estimado, valor total, status e observações.
+- Enums como `Species`, `AnimalStatus`, `ServiceType` e `BookingStatus` evitam valores livres inválidos.
 
-### Camada de repositórios
+### Persistência e regras
 
-- `Database`: encapsula a conexão com SQLite e cria as tabelas necessárias.
-- `VehicleRepository`: realiza operações de banco relacionadas a veículos.
-- `CustomerRepository`: realiza operações de banco relacionadas a clientes.
-- `RentalRepository`: realiza operações de banco relacionadas a aluguéis.
-
-### Camada de serviço
-
-- `VehicleService`: concentra as regras de cadastro, alteração, remoção, busca e validação de veículos.
-- `CustomerService`: concentra as regras de cadastro, alteração, remoção, busca e login de clientes.
-- `RentalService`: concentra as regras de criação, finalização, listagem e cálculo de multa de aluguéis.
-
-### Camada de controle
-
-- `AppController`: fornece métodos de alto nível, nomeados conforme operações HTTP, como `post_vehicle`, `get_vehicles`, `put_vehicle`, `post_rental` e `post_customer_login`. Essa classe desacopla a interface gráfica dos serviços internos.
-- `BackendError` e suas subclasses: representam erros do backend com códigos de HTTP, como `400`, `401`, `404`, `409` e `422`.
+- `Database`: encapsula a conexão SQLite e cria as tabelas.
+- `TutorRepository`, `AnimalRepository`, `ServiceRepository` e `BookingRepository`: traduzem linhas do banco em objetos e executam operações CRUD.
+- `TutorService`, `AnimalService`, `ServiceCatalog` e `BookingService`: concentram validações e regras de negócio.
+- `AppController`: expõe métodos de alto nível usados pela interface, como `post_tutor`, `post_animal`, `post_service`, `post_booking` e `complete_booking`.
+- `AppError` e suas subclasses representam erros de validação, conflito e entidade não encontrada.
 
 ### Interface gráfica
 
-- `RentalSystemApp`: janela principal da aplicação.
-- `AdminPanel`: painel administrativo com abas para veículos, clientes, aluguéis e relatórios.
-- `VehicleAdminFrame`, `CustomerAdminFrame` e `RentalAdminFrame`: telas administrativas para operar sobre cada entidade.
-- `PublicPanel`: área pública para login do cliente, visualização de veículos disponíveis e criação de aluguel.
-- `BaseFrame`, `Action`, `Choice`, `ChoiceBox`, `Column` e `DataTable`: classes auxiliares para mensagens, botões, opções tipadas e tabelas reutilizáveis.
+- `PetClinicApp`: janela principal com abas.
+- `TutorFrame`, `AnimalFrame`, `ServiceFrame`, `BookingFrame` e `HistoryFrame`: telas para cadastro, listagem, agendamento e histórico.
+- `ChoiceBox`, `DataTable` e `DateEntry`: widgets auxiliares para comboboxes tipadas, tabelas e datas.
 
 ## Conceitos de POO utilizados
 
-### Classes e objetos
-
-As entidades principais do sistema foram modeladas como classes. Durante a execução, objetos de `Vehicle`, `Customer` e `Rental` representam os dados manipulados pelo sistema.
-
-### Atributos e métodos
-
-As classes possuem atributos próprios e métodos relacionados ao seu comportamento. Por exemplo, `Vehicle` possui `set_rented`, `set_available` e `calc_rental_cost`, enquanto `Rental` possui o método de fábrica `create` e o método `set_finished`.
-
-### Encapsulamento
-
-A lógica de negócio não fica misturada com a interface gráfica. O frontend invoca apenas ao `AppController`, enquanto regras como disponibilidade de veículo, cálculo de valor total, login e finalização de aluguel ficam nos serviços e modelos.
-
-### Herança
-
-A interface gráfica usa herança com `BaseFrame`, que centraliza o acesso ao controller e os métodos comuns de exibição de mensagens. Os painéis específicos herdam esse comportamento e adicionam suas próprias telas.
-
-### Polimorfismo
-
-Na interface gráfica, os widgets auxiliares usam tipos genéricos para trabalhar com diferentes objetos de domínio sem duplicar a lógica.
-
-### Composição
-
-O controller compõe serviços, os serviços compõem repositórios e os repositórios compõem a conexão com o banco. Na interface, os painéis compõem tabelas, campos, botões e caixas de seleção.
+- Classes e objetos: tutores, animais, serviços e agendamentos são representados por objetos de domínio.
+- Atributos e métodos: os modelos validam seus próprios campos e `Booking.create` calcula término e valor total.
+- Encapsulamento: a interface acessa a lógica por meio de `AppController`; regras de negócio ficam nos serviços.
+- Herança: `Dog`, `Cat` e `Bird` herdam de `Animal`; `Consultation`, `BathGrooming`, `Vaccination` e `Housing` herdam de `Service`.
+- Polimorfismo: repositórios e views manipulam subclasses por meio das classes base `Animal` e `Service`.
+- Composição: bookings são compostos por um animal e múltiplos serviços; controller, serviços e repositórios também são compostos entre si.
 
 ## Regras de negócio implementadas
 
-- Um veículo alugado não pode ser alugado novamente.
-- Um aluguel só pode ser criado para um cliente cadastrado.
-- Um aluguel só pode ser criado para um veículo cadastrado.
-- Um aluguel só pode ser criado se o veículo estiver disponível.
-- Ao criar um aluguel, o veículo passa para o status `rented`.
-- Ao finalizar um aluguel, o veículo volta para o status `available`.
-- O valor total do aluguel é calculado automaticamente com base no valor da diária e na quantidade de dias.
-- Campos obrigatórios de veículos, clientes e aluguéis são validados.
-- Status de veículos e aluguéis usam enums, evitando valores livres inválidos.
-- O login de cliente compara o código e a senha cadastrada.
-- Erros do backend usam classes específicas com códigos inspirados em HTTP.
-- A multa por atraso é calculada para aluguéis ativos após a data prevista de devolução.
+- Campos obrigatórios são validados.
+- CPF de tutor e código de animal são únicos.
+- Um animal só pode ser cadastrado para um tutor existente.
+- Um agendamento só pode ser criado para animal e serviços cadastrados.
+- Animais inativos não podem ser agendados.
+- O status inicial de agendamento é `booked`.
+- O término estimado é calculado pela soma das durações dos serviços.
+- O valor total é calculado pela soma dos valores base dos serviços.
+- Agendamentos iniciados em sábado ou domingo recebem acréscimo de 20%.
+- O mesmo animal não pode ter agendamentos sobrepostos, exceto registros cancelados ou faltantes.
+- Consultas com o mesmo veterinário não podem ser sobrepostas.
+- A ação de concluir altera o status diretamente para `completed`.
+- Agendamentos cancelados e faltantes permanecem no histórico do animal.
 
 ## Persistência de dados
 
-O sistema usa SQLite para persistência. A classe `Database` cria automaticamente as tabelas de veículos, clientes e aluguéis. Os repositórios fazem a tradução entre linhas do banco e objetos do domínio.
+O sistema usa SQLite. O banco padrão é `.clivet.sqlite3`, criado automaticamente ao iniciar a aplicação. As tabelas principais são `tutors`, `animals`, `services`, `bookings` e `booking_services`.
 
-Também foi criado um script de população em `scripts/seed_database.py`, executável pelo comando configurado em `pyproject.toml`. Esse script recria o banco padrão e cadastra veículos, clientes e um aluguel inicial.
+O script `scripts/seed_database.py` recria o banco padrão e cadastra tutores, animais, serviços e um agendamento inicial.
 
 ## Interface gráfica
 
-A interface foi construída com Tkinter e `ttk`. Ela possui uma janela principal com abas, separando o painel administrativo da área pública.
+A interface foi construída com Tkinter e `ttk`. Ela possui abas para tutores, animais, serviços, agendamentos e histórico.
 
-No painel administrativo, o usuário pode gerenciar veículos, clientes e aluguéis. Na área pública, o cliente pode fazer login, visualizar veículos disponíveis e criar um aluguel usando sua própria conta.
+As telas de animais e serviços possuem campos dinâmicos conforme a espécie ou tipo selecionado. Exames e cirurgias não têm campos extras. A tela de agendamento permite selecionar um animal, múltiplos serviços, data e hora, além de exibir uma prévia do término estimado e do valor total.
 
-Os textos apresentados ao usuário estão em português. Internamente, o sistema mantém valores em inglês para enums e dados de domínio, evitando que a lógica dependa dos rótulos exibidos na tela.
+## Decisões de escopo
 
-## Melhorias futuras
-
-- Finalizar a tela de relatórios administrativos com listagens e exportação.
-- Melhorar o modelo da interface, com classes reutilizáveis para formulários e inputs.
-- Adicionar um formulário de busca mais avançado.
-- Adicionar confirmação antes de operações destrutivas.
+- A regra de recurso compartilhado foi limitada a consultas com o mesmo veterinário. Talvez hajam duas ou mais salas de consulta e cirurgia, quem sabe?
+- Endereço foi mantido como texto simples.
