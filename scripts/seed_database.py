@@ -1,56 +1,94 @@
 from pathlib import Path
 
-from clivet.backend.controllers import AppController
-from clivet.backend.database import Database
+from clivet.controllers import AppController
+from clivet.database import Database
 
 
 def main() -> None:
-    path = Path(".vehicle_rental.sqlite3")
+    path = Path(".clivet.sqlite3")
     path.unlink(missing_ok=True)
     controller = AppController(Database(path))
 
-    vehicles = [
-        ("ABC1D23", "Toyota", "Corolla", 2022, "car", 180.0),
-        ("MOT9A87", "Honda", "CB 500F", 2021, "motorcycle", 95.0),
-        ("TRK4B56", "Ford", "Ranger", 2023, "truck", 260.0),
-        ("VAN7C45", "Mercedes-Benz", "Sprinter", 2020, "van", 320.0),
-    ]
-
-    customers = [
-        ("11122233344", "Ana Costa", "(11) 90000-1000", "ana@example.com", "Rua Central, 100", "ana123"),
-        ("55566677788", "Bruno Lima", "(11) 90000-2000", "bruno@example.com", "Av. Norte, 250", "bruno123"),
-    ]
-
-    for plate, brand, model, year, vehicle_type, rate in vehicles:
-        controller.post_vehicle(
-            {
-                "plate": plate,
-                "brand": brand,
-                "model": model,
-                "year": year,
-                "vehicle_type": vehicle_type,
-                "daily_rate": rate,
-            }
-        )
-
-    for code, name, phone, email, address, password in customers:
-        controller.post_customer(
-            {
-                "code": code,
-                "name": name,
-                "phone": phone,
-                "email": email,
-                "address": address,
-                "password": password,
-            }
-        )
-
-    controller.post_rental(
+    controller.post_tutor(
         {
-            "customer_code": "11122233344",
-            "vehicle_plate": "ABC1D23",
-            "pickup_date": "2026-05-31",
-            "days": 3,
+            "cpf": "123.456.789-00",
+            "name": "João Silva",
+            "phone": "(48) 99999-0000",
+            "email": "joao@example.com",
+            "address": "Rua das Flores, 100",
+        }
+    )
+    controller.post_tutor(
+        {
+            "cpf": "987.654.321-00",
+            "name": "Maria Souza",
+            "phone": "(48) 98888-0000",
+            "email": "maria@example.com",
+            "address": "Rua Central, 200",
+        }
+    )
+
+    controller.post_animal(
+        {
+            "code": "REX001",
+            "name": "Rex",
+            "species": "dog",
+            "breed": "Pastor alemão",
+            "birthday": "2021-05-10",
+            "weight": 32.5,
+            "tutor_cpf": "123.456.789-00",
+            "status": "active",
+            "dog_size": "large",
+            "rabies_vaccinated": True,
+        }
+    )
+    controller.post_animal(
+        {
+            "code": "MIMI001",
+            "name": "Mimi",
+            "species": "cat",
+            "breed": "SRD",
+            "birthday": "2023-01-20",
+            "weight": 4.2,
+            "tutor_cpf": "987.654.321-00",
+            "status": "active",
+            "cat_neutered": True,
+            "cat_hair_type": "short",
+        }
+    )
+
+    controller.post_service(
+        {
+            "code": "CONS001",
+            "name": "Consulta veterinária",
+            "service_type": "consultation",
+            "description": "Atendimento clínico geral",
+            "base_value": 150.0,
+            "duration_minutes": 30,
+            "veterinarian": "Dra. Ana",
+            "specialty": "Clínica geral",
+        }
+    )
+    controller.post_service(
+        {
+            "code": "BANHO001",
+            "name": "Banho",
+            "service_type": "bath_grooming",
+            "description": "Banho simples",
+            "base_value": 80.0,
+            "duration_minutes": 60,
+            "nail_clipping": True,
+            "perfume": True,
+        }
+    )
+
+    controller.post_booking(
+        {
+            "code": "AG001",
+            "animal_code": "REX001",
+            "service_codes": ["CONS001", "BANHO001"],
+            "start_at": "2026-06-15 14:00",
+            "observations": "Primeiro atendimento.",
         }
     )
 
