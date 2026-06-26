@@ -1,90 +1,8 @@
 from datetime import date, datetime
 
 from clivet.errors import ConflictError, NotFoundError, UnprocessableEntityError
-from clivet.models import Animal, AnimalStatus, Booking, BookingStatus, Consultation, Service, ServiceType, Tutor
-from clivet.repositories import AnimalRepository, BookingRepository, ServiceRepository, TutorRepository
-
-
-class TutorService:
-    def __init__(self, repository: TutorRepository) -> None:
-        self.repository = repository
-
-    def create(self, tutor: Tutor) -> Tutor:
-        self.repository.insert(tutor)
-        return tutor
-
-    def update(self, tutor: Tutor) -> Tutor:
-        self.repository.update(tutor)
-        return tutor
-
-    def delete(self, cpf: str) -> None:
-        self.repository.delete(cpf)
-
-    def get(self, cpf: str) -> Tutor:
-        tutor = self.repository.get(cpf)
-        if tutor is None:
-            raise NotFoundError("Tutor não encontrado.")
-        return tutor
-
-    def list(self) -> list[Tutor]:
-        return self.repository.list()
-
-
-class AnimalService:
-    def __init__(self, animal_repository: AnimalRepository, tutor_repository: TutorRepository) -> None:
-        self.animal_repository = animal_repository
-        self.tutor_repository = tutor_repository
-
-    def create(self, animal: Animal) -> Animal:
-        self._require_tutor(animal.tutor_cpf)
-        self.animal_repository.insert(animal)
-        return animal
-
-    def update(self, animal: Animal) -> Animal:
-        self._require_tutor(animal.tutor_cpf)
-        self.animal_repository.update(animal)
-        return animal
-
-    def delete(self, code: str) -> None:
-        self.animal_repository.delete(code)
-
-    def get(self, code: str) -> Animal:
-        animal = self.animal_repository.get(code)
-        if animal is None:
-            raise NotFoundError("Animal não encontrado.")
-        return animal
-
-    def list(self, tutor_cpf: str = "") -> list[Animal]:
-        return self.animal_repository.list(tutor_cpf=tutor_cpf)
-
-    def _require_tutor(self, cpf: str) -> None:
-        if self.tutor_repository.get(cpf) is None:
-            raise NotFoundError("O animal exige um tutor cadastrado.")
-
-
-class ServiceCatalog:
-    def __init__(self, repository: ServiceRepository) -> None:
-        self.repository = repository
-
-    def create(self, service: Service) -> Service:
-        self.repository.insert(service)
-        return service
-
-    def update(self, service: Service) -> Service:
-        self.repository.update(service)
-        return service
-
-    def delete(self, code: str) -> None:
-        self.repository.delete(code)
-
-    def get(self, code: str) -> Service:
-        service = self.repository.get(code)
-        if service is None:
-            raise NotFoundError("Serviço não encontrado.")
-        return service
-
-    def list(self) -> list[Service]:
-        return self.repository.list()
+from clivet.models import Animal, AnimalStatus, Booking, BookingStatus, Consultation, Service, ServiceType
+from clivet.repositories import AnimalRepository, BookingRepository, ServiceRepository
 
 
 class BookingService:
@@ -98,7 +16,9 @@ class BookingService:
         self.animal_repository = animal_repository
         self.service_repository = service_repository
 
-    def create(self, code: str, animal_code: str, service_codes: list[str], start_at: datetime, observations: str) -> Booking:
+    def create(
+        self, code: str, animal_code: str, service_codes: list[str], start_at: datetime, observations: str
+    ) -> Booking:
         animal = self._require_animal(animal_code)
         services = self._require_services(service_codes)
         booking = Booking.create(
@@ -211,4 +131,3 @@ class BookingService:
             and isinstance(service, Consultation)
             and service.veterinarian.strip()
         }
-
