@@ -9,14 +9,7 @@ from clivet.models import (
     Species,
     Tutor,
 )
-from clivet.views.labels import (
-    animal_status_label,
-    booking_status_label,
-    cat_hair_label,
-    dog_size_label,
-    service_type_label,
-    species_label,
-)
+from clivet.views.labels import *
 from clivet.views.widgets import Choice
 
 

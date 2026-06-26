@@ -3,42 +3,11 @@ from datetime import date, datetime, timedelta
 from tkinter import ttk
 
 from clivet.controllers import AppController
-from clivet.models import (
-    Animal,
-    AnimalStatus,
-    BathGrooming,
-    Bird,
-    Booking,
-    Cat,
-    Consultation,
-    Dog,
-    Service,
-    ServiceType,
-    Species,
-    Tutor,
-    Vaccination,
-)
-from clivet.views.choices import (
-    animal_choices,
-    animal_status_choices,
-    booking_status_choices,
-    cat_hair_choices,
-    dog_size_choices,
-    service_type_choices,
-    species_choices,
-    tutor_choices,
-)
-from clivet.views.formatters import animal_details, animal_row, booking_row, service_row
-from clivet.views.labels import (
-    animal_status_label,
-    booking_status_label,
-    cat_hair_label,
-    dog_size_label,
-    money,
-    service_type_label,
-    species_label,
-)
-from clivet.views.widgets import ChoiceBox, Column, DataTable, DateEntry, ViewFrame
+from clivet.models import *
+from clivet.views.choices import *
+from clivet.views.formatters import *
+from clivet.views.labels import *
+from clivet.views.widgets import *
 
 class PetClinicApp(tk.Tk):
     def __init__(self, controller: AppController) -> None:

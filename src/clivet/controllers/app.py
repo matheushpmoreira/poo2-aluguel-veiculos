@@ -3,23 +3,7 @@ from typing import Any
 
 from clivet.database import Database
 from clivet.errors import BadRequestError, UnprocessableEntityError
-from clivet.models import (
-    Animal,
-    AnimalStatus,
-    BathGrooming,
-    Bird,
-    Booking,
-    BookingStatus,
-    Cat,
-    Consultation,
-    Dog,
-    Housing,
-    Service,
-    ServiceType,
-    Species,
-    Tutor,
-    Vaccination,
-)
+from clivet.models import *
 from clivet.repositories import AnimalRepository, BookingRepository, ServiceRepository, TutorRepository
 from clivet.services import AnimalService, BookingService, ServiceCatalog, TutorService
 
