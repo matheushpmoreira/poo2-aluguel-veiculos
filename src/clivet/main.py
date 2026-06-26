@@ -1,12 +1,12 @@
-from clivet.backend.controllers import AppController
-from clivet.backend.database import Database
-from clivet.frontend import RentalSystemApp
+from clivet.controllers import AppController
+from clivet.database import Database
+from clivet.views import PetClinicApp
 
 
 def main() -> None:
-    database = Database(".vehicle_rental.sqlite3")
+    database = Database(".clivet.sqlite3")
     controller = AppController(database)
-    app = RentalSystemApp(controller)
+    app = PetClinicApp(controller)
     app.mainloop()
 
 

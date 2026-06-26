@@ -11,13 +11,15 @@ requires-python = ">=3.14"
 authors = [
     { name = "Matheus Henrique", email = "matheus.hpm@grad.ufsc.br" }
 ]
-dependencies = []
+dependencies = [
+    "tkcalendar>=1.6.1",
+]
 
-#[project.scripts]
-#vhs = "matheushpmoreira.clivet.main:main"
-#
-#[tool.uv.build-backend]
-#module-name = "matheushpmoreira.clivet"
+[project.scripts]
+clivet = "clivet.main:main"
+
+[tool.uv.build-backend]
+module-name = "clivet"
 
 [tool.ruff]
 line-length = 120
