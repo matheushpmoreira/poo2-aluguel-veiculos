@@ -1,9 +1,10 @@
 from clivet.errors import NotFoundError
 from clivet.models import Animal
 from clivet.repositories import AnimalRepository, TutorRepository
+from clivet.services.base import BaseService
 
 
-class AnimalService:
+class AnimalService(BaseService):
     def __init__(self, animal_repository: AnimalRepository, tutor_repository: TutorRepository) -> None:
         self.animal_repository = animal_repository
         self.tutor_repository = tutor_repository

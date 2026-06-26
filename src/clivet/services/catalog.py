@@ -1,9 +1,10 @@
 from clivet.errors import NotFoundError
 from clivet.models import Service
 from clivet.repositories import ServiceRepository
+from clivet.services.base import BaseService
 
 
-class ServiceCatalog:
+class ServiceCatalog(BaseService):
     def __init__(self, repository: ServiceRepository) -> None:
         self.repository = repository
 

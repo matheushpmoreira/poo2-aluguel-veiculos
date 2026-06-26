@@ -5,9 +5,10 @@ from typing import Iterable
 from clivet.database import Database
 from clivet.errors import ConflictError, NotFoundError
 from clivet.models import BathGrooming, Consultation, Housing, Service, ServiceType, Vaccination
+from clivet.repositories.base import Repository
 
 
-class ServiceRepository:
+class ServiceRepository(Repository):
     def __init__(self, database: Database) -> None:
         self.database = database
 

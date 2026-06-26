@@ -3,9 +3,10 @@ import sqlite3
 from clivet.database import Database
 from clivet.errors import ConflictError, NotFoundError
 from clivet.models import Tutor
+from clivet.repositories.base import Repository
 
 
-class TutorRepository:
+class TutorRepository(Repository):
     def __init__(self, database: Database) -> None:
         self.database = database
 

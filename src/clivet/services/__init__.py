@@ -1,6 +1,7 @@
 from clivet.services.animal import AnimalService
+from clivet.services.base import BaseService
 from clivet.services.booking import BookingService
 from clivet.services.catalog import ServiceCatalog
 from clivet.services.tutor import TutorService
 
-__all__ = ["AnimalService", "BookingService", "ServiceCatalog", "TutorService"]
+__all__ = ["AnimalService", "BaseService", "BookingService", "ServiceCatalog", "TutorService"]

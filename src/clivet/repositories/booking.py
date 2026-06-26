@@ -5,10 +5,11 @@ from clivet.database import Database
 from clivet.errors import ConflictError, NotFoundError
 from clivet.models import Booking, BookingStatus, Service
 from clivet.repositories.animal import AnimalRepository
+from clivet.repositories.base import Repository
 from clivet.repositories.service import ServiceRepository
 
 
-class BookingRepository:
+class BookingRepository(Repository):
     def __init__(
         self, database: Database, animal_repository: AnimalRepository, service_repository: ServiceRepository
     ) -> None:

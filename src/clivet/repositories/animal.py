@@ -4,9 +4,10 @@ from datetime import date
 from clivet.database import Database
 from clivet.errors import ConflictError, NotFoundError
 from clivet.models import Animal, Bird, Cat, Dog, Species
+from clivet.repositories.base import Repository
 
 
-class AnimalRepository:
+class AnimalRepository(Repository):
     def __init__(self, database: Database) -> None:
         self.database = database
 

@@ -3,9 +3,10 @@ from datetime import date, datetime
 from clivet.errors import ConflictError, NotFoundError, UnprocessableEntityError
 from clivet.models import Animal, AnimalStatus, Booking, BookingStatus, Consultation, Service, ServiceType
 from clivet.repositories import AnimalRepository, BookingRepository, ServiceRepository
+from clivet.services.base import BaseService
 
 
-class BookingService:
+class BookingService(BaseService):
     def __init__(
         self,
         booking_repository: BookingRepository,
