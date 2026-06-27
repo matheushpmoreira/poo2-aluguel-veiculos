@@ -50,26 +50,26 @@ O script cria tutores, animais, serviços e um agendamento de exemplo.
 
 ### Critérios de avaliação
 
-- [ ] Modelagem orientada a objetos (classes, atributos, métodos)
-- [ ] Encapsulamento (atributos privados, getters/setters)
-- [ ] Herança (Animal → Cachorro/Gato/Ave; Serviço → Consulta/BanhoTosa/Vacinação/Hospedagem)
-- [ ] Polimorfismo implementado (sobrescrita de métodos nas subclasses)
-- [ ] Composição entre entidades (Agendamento composto por Animal + Serviços; Animal vinculado a Tutor)
-- [ ] Interface gráfica com Tkinter (janelas, navegação, campos, listas e mensagens)
-- [ ] Funcionalidades obrigatórias (CRUD de tutores, animais, serviços e agendamentos)
-- [ ] Regras de negócio implementadas (sobreposição de horários, cálculo automático, acréscimo de 20% em finais de semana, validações)
-- [ ] Persistência de dados (JSON ou SQLite, salvamento e carregamento corretos)
-- [ ] Organização do código e documentação (estrutura de pastas, README, relatório, comentários)
+- [X] Modelagem orientada a objetos (classes, atributos, métodos)
+- [X] Encapsulamento (atributos privados, getters/setters)
+- [X] Herança (Animal → Cachorro/Gato/Ave; Serviço → Consulta/BanhoTosa/Vacinação/Hospedagem)
+- [X] Polimorfismo implementado (sobrescrita de métodos nas subclasses)
+- [X] Composição entre entidades (Agendamento composto por Animal + Serviços; Animal vinculado a Tutor)
+- [X] Interface gráfica com Tkinter (janelas, navegação, campos, listas e mensagens)
+- [X] Funcionalidades obrigatórias (CRUD de tutores, animais, serviços e agendamentos)
+- [X] Regras de negócio implementadas (sobreposição de horários, cálculo automático, acréscimo de 20% em finais de semana, validações)
+- [X] Persistência de dados (JSON ou SQLite, salvamento e carregamento corretos)
+- [X] Organização do código e documentação (estrutura de pastas, README, relatório, comentários)
 
 ### Regras de negócio
 
-- [ ] Um animal inativo não pode ser agendado.
-- [ ] Um agendamento só pode ser criado se o tutor e o animal estiverem cadastrados.
-- [ ] Não pode haver sobreposição de horários para o mesmo animal (um animal não pode ter dois agendamentos no mesmo horário).
-- [ ] Não pode haver sobreposição de horários para serviços que exijam o mesmo recurso (ex: duas cirurgias no mesmo horário, ou consulta com o mesmo veterinário).
-- [ ] Ao criar um agendamento, o status inicial é "agendado".
-- [ ] Ao concluir um agendamento, o status muda para "concluído" e é registrado no histórico do animal.
-- [ ] O valor total deve ser calculado automaticamente, com acréscimo de 20% para agendamentos em sábados e domingos.
-- [ ] Não devem ser aceitos cadastros com campos obrigatórios vazios.
-- [ ] CPF do tutor e código do animal devem ser únicos no sistema.
-- [ ] Agendamentos cancelados ou não comparecidos devem ser mantidos no histórico.
+- [X] Um animal inativo não pode ser agendado.
+- [X] Um agendamento só pode ser criado se o tutor e o animal estiverem cadastrados.
+- [X] Não pode haver sobreposição de horários para o mesmo animal (um animal não pode ter dois agendamentos no mesmo horário).
+- [X] Não pode haver sobreposição de horários para serviços que exijam o mesmo recurso (ex: duas cirurgias no mesmo horário, ou consulta com o mesmo veterinário).
+- [X] Ao criar um agendamento, o status inicial é "agendado".
+- [X] Ao concluir um agendamento, o status muda para "concluído" e é registrado no histórico do animal.
+- [X] O valor total deve ser calculado automaticamente, com acréscimo de 20% para agendamentos em sábados e domingos.
+- [X] Não devem ser aceitos cadastros com campos obrigatórios vazios.
+- [X] CPF do tutor e código do animal devem ser únicos no sistema.
+- [X] Agendamentos cancelados ou não comparecidos devem ser mantidos no histórico.
